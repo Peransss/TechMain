@@ -54,7 +54,7 @@ class FirestoreService {
             ),
             "status" to "waiting",
             "gameId" to "",
-            "createdAt" to FieldValue.serverTimestamp()
+            "createdAt" to System.currentTimeMillis()
         )
         roomsCollection.document(roomCode).set(room).await()
         return roomCode
@@ -134,7 +134,7 @@ class FirestoreService {
             "roundStartTime" to (System.currentTimeMillis() + 3000),
             "roundTimeLimit" to 20,
             "winnerId" to "",
-            "createdAt" to FieldValue.serverTimestamp()
+            "createdAt" to System.currentTimeMillis()
         )
         gameRef.set(game, SetOptions.merge()).await()
 
