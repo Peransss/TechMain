@@ -18,3 +18,9 @@ val RpgXpGreen = Color(0xFF43A047)
 val RpgBgDark = Color(0xFF1A1A2E)
 val RpgBgSurface = Color(0xFF16213E)
 val RpgAccentOrange = Color(0xFFE67E22)
+
+val NeonHackerBackground = Color(0xFF0A0A0C)
+val NeonHackerSurface = Color(0xFF121217)
+val NeonHackerPrimary = Color(0xFF00FFFF) // Cyan
+val NeonHackerSecondary = Color(0xFF39FF14) // Lime Green
+val NeonHackerBorder = Color(0xFF1F1F2E)
