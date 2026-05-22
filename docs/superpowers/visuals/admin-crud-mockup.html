@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Multimedia CRUD Design</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #6200EE; text-align: center; }
+        .section { margin-bottom: 30px; }
+        .section-title { font-weight: bold; font-size: 1.2em; margin-bottom: 10px; border-bottom: 2px solid #6200EE; display: inline-block; }
+        
+        .mockup-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .phone-frame {
+            width: 300px;
+            height: 600px;
+            border: 12px solid #333;
+            border-radius: 36px;
+            background: #fff;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .screen {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: #fafafa;
+        }
+        .status-bar { height: 24px; background: #6200EE; color: white; font-size: 12px; display: flex; align-items: center; padding: 0 15px; justify-content: space-between; }
+        .app-bar { height: 56px; background: #6200EE; color: white; display: flex; align-items: center; padding: 0 16px; font-weight: bold; }
+        .content { flex: 1; padding: 16px; overflow-y: auto; }
+        
+        .card { background: white; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #ddd; }
+        .btn { background: #6200EE; color: white; border: none; padding: 10px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 8px; }
+        .btn-outline { background: transparent; color: #6200EE; border: 2px solid #6200EE; }
+        
+        .image-placeholder {
+            width: 100%;
+            height: 150px;
+            background: #eee;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #bbb;
+            color: #888;
+            margin-bottom: 12px;
+        }
+        .input-field {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .label { font-size: 0.8em; color: #666; font-weight: bold; margin-bottom: 4px; display: block; }
+        
+        .architecture-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Design: Admin Multimedia CRUD</h1>
+        
+        <div class="section">
+            <p>Kita akan menambahkan sebuah <strong>Admin Dashboard</strong> tersembunyi (diakses melalui klik lama pada avatar profil) untuk mengelola bank soal secara langsung dari aplikasi.</p>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Visual Mockup</div>
+            <div class="mockup-container">
+                <!-- List View -->
+                <div class="phone-frame">
+                    <div class="screen">
+                        <div class="status-bar"><span>12:30</span><span>⚡ 100%</span></div>
+                        <div class="app-bar">Kelola Soal</div>
+                        <div class="content">
+                            <div class="card">
+                                <b>ID: Q123</b><br>
+                                <span style="font-size: 0.9em; color: #666;">Apa nama hewan ini?</span>
+                                <div style="height: 40px; background: #eee; margin-top: 5px; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #999;">🖼️ has_image.jpg</div>
+                            </div>
+                            <div class="card">
+                                <b>ID: Q124</b><br>
+                                <span style="font-size: 0.9em; color: #666;">Berapa 10 + 5?</span>
+                            </div>
+                            <button class="btn">+ TAMBAH SOAL</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create/Edit View -->
+                <div class="phone-frame">
+                    <div class="screen">
+                        <div class="status-bar"><span>12:31</span><span>⚡ 100%</span></div>
+                        <div class="app-bar">Tambah Soal</div>
+                        <div class="content">
+                            <span class="label">GAMBAR (Opsional)</span>
+                            <div class="image-placeholder">
+                                📷 KLIK UNTUK UNGGAH
+                            </div>
+                            
+                            <span class="label">PERTANYAAN</span>
+                            <input type="text" class="input-field" placeholder="Ketik pertanyaan...">
+                            
+                            <span class="label">PILIHAN JAWABAN</span>
+                            <input type="text" class="input-field" placeholder="Opsi A (Benar)">
+                            <input type="text" class="input-field" placeholder="Opsi B">
+                            <input type="text" class="input-field" placeholder="Opsi C">
+                            <input type="text" class="input-field" placeholder="Opsi D">
+                            
+                            <button class="btn">SIMPAN KE CLOUD</button>
+                            <button class="btn btn-outline">BATAL</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Arsitektur & Komponen</div>
+            <div class="architecture-grid">
+                <div class="card">
+                    <h3 style="margin-top:0; color: #6200EE;">Storage</h3>
+                    <p><strong>Firebase Storage</strong> akan digunakan untuk menyimpan file gambar. URL gambar akan disimpan di Firestore.</p>
+                </div>
+                <div class="card">
+                    <h3 style="margin-top:0; color: #6200EE;">Database</h3>
+                    <p>Koleksi <code>questions</code> baru di Firestore. Game akan memprioritaskan soal dari cloud daripada local bank.</p>
+                </div>
+                <div class="card">
+                    <h3 style="margin-top:0; color: #6200EE;">Security</h3>
+                    <p>Hanya UID admin tertentu yang bisa melakukan <code>write</code> ke koleksi soal (Firebase Rules).</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" style="text-align: center;">
+            <p><strong>Apakah alur visual ini sudah sesuai dengan yang Anda bayangkan?</strong></p>
+        </div>
+    </div>
+</body>
+</html>

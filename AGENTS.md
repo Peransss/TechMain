@@ -67,5 +67,9 @@ Bottom nav uses `popUpTo(findStartDestination)`, `launchSingleTop`, `restoreStat
 - **No tests exist** beyond boilerplate `ExampleUnitTest`.
 - **Quiz questions** (48 total, 6 categories × 8) are hardcoded in `QuestionBank.kt`. 5 random per game.
 - **`Icons.Default.ArrowBack`** should use `Icons.AutoMirrored.Filled.ArrowBack` (deprecation warning).
+- **Advance-round is reactive, not one-shot:** `listenGame` snapshot handler detects `players.all { isReady }` and calls `advanceRound` via `viewModelScope.launch`. Do NOT add `delay + check` in `submitAnswer`/`botSubmitAnswer`/`timeoutSubmit` — that creates a race that hangs the game.
+- **Do NOT use boolean flags for advance-round gating:** The `advancing` flag can get stuck forever if `advanceRound` throws (network error). Use `game.currentRound == lastRound` instead — it resets naturally when the round advances, without getting stuck.
+- **`advanceRound` has a guard** `if (game.currentRound != currentRound) return` — safe against concurrent calls from subscriber + manual triggers.
+- **`listenGame` must be called only once per `gameId`** — the `listenRoom` handler uses `_state.value.gameId != room.gameId` guard. Without this, duplicate calls cancel the previous listener, reset `lastRound = -1`, and restart the timer mid-game.
 - Android Gradle Plugin 9.2.1 requires `android.disallowKotlinSourceSets=false` in `gradle.properties` when KSP or compose-compiler plugins are used.
 - **`BattleViewModel` and `LeaderboardViewModel`** extend plain `ViewModel` (use Firebase directly). `ProfileViewModel` extends `AndroidViewModel` (needs Room DAO via `TechMainApp`).

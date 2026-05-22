@@ -11,6 +11,7 @@ import kotlinx.coroutines.tasks.await
 object FirebaseModule {
     val auth: FirebaseAuth get() = Firebase.auth
     val db: FirebaseFirestore get() = Firebase.firestore
+    val storageService = StorageService()
 
     suspend fun signInAnonymously(): Result<String> = runCatching {
         val result = auth.signInAnonymously().await()

@@ -16,6 +16,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.Login
+
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -26,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -35,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.techmain.firebase.QuestionBank
+import com.example.techmain.game.BotDifficulty
 
 @Composable
 fun BattleLobbyScreen(viewModel: BattleViewModel) {
@@ -115,7 +119,19 @@ fun LobbyContent(viewModel: BattleViewModel) {
         ) {
             Icon(Icons.Default.Add, contentDescription = null)
             Spacer(modifier = Modifier.size(8.dp))
-            Text("BUAT ROOM", fontWeight = FontWeight.Bold)
+            Text("BUAT ROOM (Multiplayer)", fontWeight = FontWeight.Bold)
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(
+            onClick = { viewModel.showDifficultyDialog() },
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            enabled = state.selectedCategory.isNotEmpty(),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary
+            )
+        ) {
+            Text("\uD83E\uDD16 VS BOT", fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(8.dp))
         FilledTonalButton(
@@ -127,6 +143,10 @@ fun LobbyContent(viewModel: BattleViewModel) {
             Spacer(modifier = Modifier.size(8.dp))
             Text("GABUNG ROOM", fontWeight = FontWeight.Bold)
         }
+    }
+
+    if (state.showDifficultyDialog) {
+        DifficultyDialog(viewModel = viewModel)
     }
 }
 
@@ -171,6 +191,58 @@ fun JoinRoomContent(viewModel: BattleViewModel) {
 }
 
 @Composable
+fun DifficultyDialog(viewModel: BattleViewModel) {
+    val state by viewModel.state.collectAsState()
+
+    AlertDialog(
+        onDismissRequest = { viewModel.hideDifficultyDialog() },
+        title = {
+            Text("Pilih Kesulitan Bot", fontWeight = FontWeight.Bold)
+        },
+        text = {
+            Column {
+                BotDifficulty.entries.forEach { difficulty ->
+                    val isSelected = state.difficulty == difficulty
+                    TextButton(
+                        onClick = {
+                            viewModel.setDifficulty(difficulty)
+                            viewModel.hideDifficultyDialog()
+                            viewModel.startVsBot()
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    ) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                when (difficulty) {
+                                    BotDifficulty.EASY -> "\uD83C\uDF31 Easy"
+                                    BotDifficulty.MEDIUM -> "\u26A1 Medium"
+                                    BotDifficulty.HARD -> "\uD83D\uDD25 Hard"
+                                },
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                when (difficulty) {
+                                    BotDifficulty.EASY -> "Bot menjawab random (~25% benar)"
+                                    BotDifficulty.MEDIUM -> "Bot menjawab cukup baik (~50% benar)"
+                                    BotDifficulty.HARD -> "Bot sangat pintar (~80% benar)"
+                                },
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { viewModel.hideDifficultyDialog() }) {
+                Text("BATAL")
+            }
+        }
+    )
+}
+
+@Composable
 fun WaitingRoomScreen(viewModel: BattleViewModel) {
     val state by viewModel.state.collectAsState()
     val room = state.room
@@ -200,13 +272,17 @@ fun WaitingRoomScreen(viewModel: BattleViewModel) {
         Text("Pemain (${room.players.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
 
-        room.players.forEach { (_, player) ->
+        val sortedPlayers = room.players.entries.sortedBy { it.key != room.hostId }
+        sortedPlayers.forEach { (_, player) ->
+            val isHostPlayer = player.userId == room.hostId
             Card(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (player.userId == state.myUserId)
-                        MaterialTheme.colorScheme.secondaryContainer
-                    else MaterialTheme.colorScheme.surfaceVariant
+                    containerColor = when {
+                        isHostPlayer -> MaterialTheme.colorScheme.tertiaryContainer
+                        player.userId == state.myUserId -> MaterialTheme.colorScheme.secondaryContainer
+                        else -> MaterialTheme.colorScheme.surfaceVariant
+                    }
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
@@ -215,7 +291,14 @@ fun WaitingRoomScreen(viewModel: BattleViewModel) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(player.displayName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                    Text(if (player.userId == room.hostId) "\uD83D\uDC51 Host" else "\u2705 Siap")
+                    if (isHostPlayer) {
+                        androidx.compose.material3.SuggestionChip(
+                            onClick = {},
+                            label = { Text("HOST") }
+                        )
+                    } else {
+                        Text("\u2705 Siap")
+                    }
                 }
             }
         }

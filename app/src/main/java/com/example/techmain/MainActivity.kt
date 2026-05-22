@@ -32,6 +32,7 @@ import com.example.techmain.ui.battle.BattleMainScreen
 import com.example.techmain.ui.leaderboard.LeaderboardScreen
 import com.example.techmain.ui.navigation.Screen
 import com.example.techmain.ui.profile.ProfileScreen
+import com.example.techmain.ui.studio.StudioScreen
 import com.example.techmain.ui.theme.TechMainTheme
 
 class MainActivity : ComponentActivity() {
@@ -63,7 +64,7 @@ fun MainScreen() {
         return
     }
 
-    val screens = listOf(Screen.Battle, Screen.Leaderboard, Screen.Profile)
+    val screens = listOf(Screen.Battle, Screen.Studio, Screen.Leaderboard, Screen.Profile)
 
     Scaffold(
         bottomBar = {
@@ -93,6 +94,7 @@ fun MainScreen() {
             modifier = Modifier.fillMaxSize().padding(innerPadding)
         ) {
             composable(Screen.Battle.route) { BattleMainScreen() }
+            composable(Screen.Studio.route) { StudioScreen() }
             composable(Screen.Leaderboard.route) {
                 LeaderboardScreen(onBack = { navController.popBackStack() })
             }

@@ -29,7 +29,12 @@ class FirestoreService {
     fun listenMyQuizzes(userId: String): Flow<List<CustomQuiz>> = callbackFlow {
         val listener = customQuizzesCollection
             .whereEqualTo("creatorId", userId)
-            .addSnapshotListener { snapshot, _ ->
+            .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
                 val quizzes = snapshot?.toObjects(CustomQuiz::class.java) ?: emptyList()
                 trySend(quizzes)
             }
@@ -44,7 +49,11 @@ class FirestoreService {
         val listener = customQuizzesCollection
             .whereEqualTo("isFeatured", true)
             .limit(5)
-            .addSnapshotListener { snapshot, _ ->
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
                 val quizzes = snapshot?.toObjects(CustomQuiz::class.java) ?: emptyList()
                 trySend(quizzes)
             }
