@@ -45,6 +45,10 @@ class FirestoreService {
         customQuizzesCollection.document(quizId).delete().await()
     }
 
+    suspend fun updateCustomQuizQuestions(quizId: String, questions: List<CustomQuestion>) {
+        customQuizzesCollection.document(quizId).update("questions", questions).await()
+    }
+
     fun fetchFeaturedQuizzes(): Flow<List<CustomQuiz>> = callbackFlow {
         val listener = customQuizzesCollection
             .whereEqualTo("isFeatured", true)

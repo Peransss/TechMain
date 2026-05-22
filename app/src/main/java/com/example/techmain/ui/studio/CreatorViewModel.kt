@@ -44,4 +44,28 @@ class CreatorViewModel : ViewModel() {
             }
         }
     }
+
+    fun saveQuiz(quiz: CustomQuiz, images: Map<String, android.net.Uri>) {
+        val userId = FirebaseModule.getUserId() ?: return
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isLoading = true)
+            try {
+                val quizId = firestoreService.createCustomQuiz(quiz)
+                val updatedQuestions = quiz.questions.map { question ->
+                    val imageUri = images[question.id]
+                    if (imageUri != null) {
+                        val imageUrl = storage.uploadQuizImage(userId, quizId, question.id, imageUri)
+                            .getOrThrow()
+                        question.copy(imageUrl = imageUrl)
+                    } else {
+                        question
+                    }
+                }
+                firestoreService.updateCustomQuizQuestions(quizId, updatedQuestions)
+                _state.value = _state.value.copy(isLoading = false)
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(isLoading = false, errorMessage = "Gagal menyimpan kuis")
+            }
+        }
+    }
 }
