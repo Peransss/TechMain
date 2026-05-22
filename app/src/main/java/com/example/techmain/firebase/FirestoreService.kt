@@ -9,11 +9,47 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import kotlin.random.Random
 
+// Add imports for CustomQuiz
+import com.google.firebase.firestore.ktx.toObjects
+
 class FirestoreService {
     private val db = FirebaseModule.db
     private val usersCollection = db.collection("users")
     private val gamesCollection = db.collection("games")
     private val roomsCollection = db.collection("rooms")
+    private val customQuizzesCollection = db.collection("custom_quizzes")
+
+    suspend fun createCustomQuiz(quiz: CustomQuiz): String {
+        val ref = customQuizzesCollection.document()
+        val finalQuiz = quiz.copy(id = ref.id, createdAt = System.currentTimeMillis())
+        ref.set(finalQuiz).await()
+        return ref.id
+    }
+
+    fun listenMyQuizzes(userId: String): Flow<List<CustomQuiz>> = callbackFlow {
+        val listener = customQuizzesCollection
+            .whereEqualTo("creatorId", userId)
+            .addSnapshotListener { snapshot, _ ->
+                val quizzes = snapshot?.toObjects(CustomQuiz::class.java) ?: emptyList()
+                trySend(quizzes)
+            }
+        awaitClose { listener.remove() }
+    }
+
+    suspend fun deleteCustomQuiz(quizId: String) {
+        customQuizzesCollection.document(quizId).delete().await()
+    }
+
+    fun fetchFeaturedQuizzes(): Flow<List<CustomQuiz>> = callbackFlow {
+        val listener = customQuizzesCollection
+            .whereEqualTo("isFeatured", true)
+            .limit(5)
+            .addSnapshotListener { snapshot, _ ->
+                val quizzes = snapshot?.toObjects(CustomQuiz::class.java) ?: emptyList()
+                trySend(quizzes)
+            }
+        awaitClose { listener.remove() }
+    }
 
     suspend fun createOrUpdateUser(userId: String, displayName: String) {
         val userRef = usersCollection.document(userId)
@@ -155,7 +191,7 @@ class FirestoreService {
         awaitClose { listener.remove() }
     }
 
-    suspend fun submitAnswer(gameId: String, playerId: String, round: Int, selectedAnswer: Int, isCorrect: Boolean) {
+    suspend fun submitAnswer(gameId: String, playerId: String, selectedAnswer: Int, isCorrect: Boolean) {
         val gameRef = gamesCollection.document(gameId)
         gameRef.update(
             mapOf(
@@ -172,12 +208,22 @@ class FirestoreService {
         if (nextRound >= totalRounds) {
             endGame(gameId)
         } else {
-            gamesCollection.document(gameId).update(
-                mapOf(
+            val gameRef = gamesCollection.document(gameId)
+            db.runTransaction { transaction ->
+                val snapshot = transaction.get(gameRef)
+                val game = snapshot.toObject<GameSession>() ?: return@runTransaction
+
+                if (game.currentRound != currentRound) return@runTransaction
+
+                val updates = mutableMapOf<String, Any>(
                     "currentRound" to nextRound,
                     "roundStartTime" to (System.currentTimeMillis() + 2000)
                 )
-            ).await()
+                game.players.keys.forEach { uid ->
+                    updates["players.$uid.isReady"] = false
+                }
+                transaction.update(gameRef, updates)
+            }.await()
         }
     }
 
@@ -190,6 +236,7 @@ class FirestoreService {
         val winnerId = winner?.key ?: ""
 
         for ((uid, player) in players) {
+            if (uid.startsWith("system_bot_")) continue
             val userRef = usersCollection.document(uid)
             val isWinner = uid == winnerId
             userRef.update(
