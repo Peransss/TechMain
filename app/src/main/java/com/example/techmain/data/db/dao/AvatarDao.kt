@@ -21,16 +21,4 @@ interface AvatarDao {
 
     @Update
     suspend fun update(avatar: Avatar)
-
-    @Query("UPDATE avatar SET currentXp = currentXp + :xp, gold = gold + :gold WHERE id = :id")
-    suspend fun addRewards(id: Long, xp: Int, gold: Int)
-
-    @Query("UPDATE avatar SET gold = gold + :gold WHERE id = :id")
-    suspend fun addGold(id: Long, gold: Int)
-
-    @Query("UPDATE avatar SET gold = gold - :gold WHERE id = :id AND gold >= :gold")
-    suspend fun spendGold(id: Long, gold: Int): Int
-
-    @Query("UPDATE avatar SET level = level + 1, currentXp = 0, xpToNextLevel = xpToNextLevel + 50 WHERE id = :id")
-    suspend fun levelUp(id: Long)
 }

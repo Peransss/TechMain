@@ -1,4 +1,4 @@
-# TechMain — Gamified Study App (RPG)
+# TechMain — Educational Battle Quiz Game
 
 ## Build & Run
 
@@ -16,52 +16,56 @@
 |---|---|---|
 | UI | Jetpack Compose + Material3 | All screens are `@Composable` |
 | State | ViewModel + StateFlow / Flow | `collectAsState()` in composables |
-| Nav | Navigation Compose 2.9.0 | 5-tab bottom nav + leaderboard sub-route |
-| Local DB | Room 2.7.1 (KSP) | 7 entities, 7 DAOs, schema v1 |
-| Backend | Firebase Auth + Firestore | Anonymous sign-in; real-time matchmaking & leaderboard |
-| DI | None (manual) | Repositories in `TechMainApp`; ViewModels cast `application` |
+| Nav | Navigation Compose 2.9.0 | 3-tab bottom nav |
+| Local DB | Room 2.7.1 (KSP) | 1 entity (Avatar), schema v2, destructive migration enabled |
+| Backend | Firebase Auth + Firestore | Anonymous sign-in; real-time rooms, games & leaderboard |
+| DI | None (manual) | ViewModels access `TechMainApp.database` or Firebase directly |
 
 ## Entry Points
 
-- `TechMainApp` — Application class; creates `AppDatabase` + 4 repositories
+- `TechMainApp` — Application class; creates `AppDatabase` (Avatar only)
 - `MainActivity` — Single activity; calls `FirebaseModule.signInAnonymously()` on startup (blocks UI with spinner until done)
 
-## Navigation (NavGraph.kt)
+## Navigation
 
 | Route | Screen | Bottom Nav |
 |---|---|---|
-| `quest` | QuestScreen (to-do list) | ✓ |
-| `pomodoro` | PomodoroScreen (timer) | ✓ |
-| `flashcard` | FlashcardScreen (spaced repetition) | ✓ |
-| `battle` | BattleMainScreen (quiz battle) | ✓ |
-| `shop` | ShopScreen (avatar + shop) | ✓ |
-| `leaderboard` | LeaderboardScreen | sub-route from Battle |
+| `battle` | BattleMainScreen (create/join room → quiz) | ✓ |
+| `leaderboard` | LeaderboardScreen (global rankings) | ✓ |
+| `profile` | ProfileScreen (stats, avatar, name) | ✓ |
 
 Bottom nav uses `popUpTo(findStartDestination)`, `launchSingleTop`, `restoreState`.
 
-**BattleMainScreen has its own internal screen routing** (`BattleUiState.screen`: LOBBY/MATCHMAKING/GAME/RESULT) managed by `BattleViewModel`, not `NavHost`.
+**BattleMainScreen has internal screen routing** (`BattleUiState.screen`: LOBBY/JOIN_ROOM/WAITING_ROOM/GAME/RESULT) managed by `BattleViewModel`, not `NavHost`.
+
+## Room System (like ZEP Quiz)
+
+- Users create rooms (6-char code) or join via code
+- Host selects category; room stored in Firestore `rooms/{roomCode}`
+- When host clicks "Mulai Game", questions are pulled from `QuestionBank` and a `games/{gameId}` document is created
+- All players get the same 5 questions simultaneously
+- 20-second timer per round; answers submitted to Firestore in real-time
+- Game advances when all players have answered
+
+## Firebase Data Model
+
+- `users/{uid}` — displayName, rating, wins, losses, totalGames, correctAnswers, totalAnswers
+- `rooms/{roomCode}` — hostId, categoryId, players map, status (waiting/playing/finished), gameId
+- `games/{gameId}` — players with scores, questions, currentRound, roundStartTime, status
 
 ## Room Database
 
 - **Database name:** `techmain_database`
-- **Destructive migration is OFF** (`fallbackToDestructiveMigration(false)`). Schema changes without a migration will crash.
-- **Single-row avatar table** — only one avatar per device.
-- Entities: `Quest`, `PomodoroSession`, `FlashcardDeck`, `Flashcard`, `Avatar`, `ShopItem`, `Inventory`.
-
-## Firebase Data Model
-
-- `users/{uid}` — rating, wins, losses, totalGames, correctAnswers, totalAnswers
-- `games/{gameId}` — real-time game session with players, questions, round state
-- `matchmaking/{userId}` — matchmaking ticket (categoryId, joinedAt)
-
-Matchmaking is simplistic: pairs first two tickets in same category by userId string comparison.
+- **Destructive migration is ON** (`fallbackToDestructiveMigration(true)`). Schema changes will wipe data.
+- **Single table:** `Avatar` (id, name, avatarEmoji)
 
 ## Key Gotchas
 
 - **All UI strings are hardcoded in Indonesian** — not in `strings.xml` (which only has `app_name`).
-- **google-services.json is committed** to the repo. The placeholder values have been replaced with a real Firebase project. Rotate API keys if needed.
+- **google-services.json is committed** — replace with your own Firebase config if forking. Needs Anonymous Auth + Firestore enabled.
 - **No offline Firestore persistence** configured.
 - **No tests exist** beyond boilerplate `ExampleUnitTest`.
 - **Quiz questions** (48 total, 6 categories × 8) are hardcoded in `QuestionBank.kt`. 5 random per game.
 - **`Icons.Default.ArrowBack`** should use `Icons.AutoMirrored.Filled.ArrowBack` (deprecation warning).
 - Android Gradle Plugin 9.2.1 requires `android.disallowKotlinSourceSets=false` in `gradle.properties` when KSP or compose-compiler plugins are used.
+- **`BattleViewModel` and `LeaderboardViewModel`** extend plain `ViewModel` (use Firebase directly). `ProfileViewModel` extends `AndroidViewModel` (needs Room DAO via `TechMainApp`).

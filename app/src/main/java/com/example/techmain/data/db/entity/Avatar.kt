@@ -6,12 +6,6 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "avatar")
 data class Avatar(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val name: String = "Petualang",
-    val level: Int = 1,
-    val currentXp: Int = 0,
-    val xpToNextLevel: Int = 100,
-    val gold: Int = 0,
-    val equippedHead: String? = null,
-    val equippedBody: String? = null,
-    val equippedWeapon: String? = null
+    val name: String = "Pemain",
+    val avatarEmoji: String = "\uD83D\uDE0E"
 )

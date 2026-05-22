@@ -29,12 +29,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.techmain.firebase.FirebaseModule
 import com.example.techmain.ui.battle.BattleMainScreen
-import com.example.techmain.ui.flashcard.FlashcardScreen
 import com.example.techmain.ui.leaderboard.LeaderboardScreen
 import com.example.techmain.ui.navigation.Screen
-import com.example.techmain.ui.pomodoro.PomodoroScreen
-import com.example.techmain.ui.quest.QuestScreen
-import com.example.techmain.ui.shop.ShopScreen
+import com.example.techmain.ui.profile.ProfileScreen
 import com.example.techmain.ui.theme.TechMainTheme
 
 class MainActivity : ComponentActivity() {
@@ -42,9 +39,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            TechMainTheme {
-                MainScreen()
-            }
+            TechMainTheme { MainScreen() }
         }
     }
 }
@@ -52,14 +47,12 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
-    var isSignedIn by remember { mutableStateOf(false) }
     var isSigningIn by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         if (!FirebaseModule.isSignedIn()) {
             FirebaseModule.signInAnonymously()
         }
-        isSignedIn = FirebaseModule.isSignedIn()
         isSigningIn = false
     }
 
@@ -70,13 +63,7 @@ fun MainScreen() {
         return
     }
 
-    val screens = listOf(
-        Screen.Quest,
-        Screen.Pomodoro,
-        Screen.Flashcard,
-        Screen.Battle,
-        Screen.Shop
-    )
+    val screens = listOf(Screen.Battle, Screen.Leaderboard, Screen.Profile)
 
     Scaffold(
         bottomBar = {
@@ -90,9 +77,7 @@ fun MainScreen() {
                         selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                         onClick = {
                             navController.navigate(screen.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                                 launchSingleTop = true
                                 restoreState = true
                             }
@@ -104,27 +89,14 @@ fun MainScreen() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Quest.route,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+            startDestination = Screen.Battle.route,
+            modifier = Modifier.fillMaxSize().padding(innerPadding)
         ) {
-            composable(Screen.Quest.route) { QuestScreen() }
-            composable(Screen.Pomodoro.route) { PomodoroScreen() }
-            composable(Screen.Flashcard.route) { FlashcardScreen() }
-            composable(Screen.Shop.route) { ShopScreen() }
-            composable(Screen.Battle.route) {
-                BattleMainScreen(
-                    onNavigateToLeaderboard = {
-                        navController.navigate(Screen.Leaderboard.route)
-                    }
-                )
-            }
+            composable(Screen.Battle.route) { BattleMainScreen() }
             composable(Screen.Leaderboard.route) {
-                LeaderboardScreen(
-                    onBack = { navController.popBackStack() }
-                )
+                LeaderboardScreen(onBack = { navController.popBackStack() })
             }
+            composable(Screen.Profile.route) { ProfileScreen() }
         }
     }
 }

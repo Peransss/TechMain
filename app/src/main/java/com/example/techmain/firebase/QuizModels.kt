@@ -33,9 +33,18 @@ data class GameSession(
     val createdAt: Long = 0L
 )
 
-data class MatchmakingTicket(
+data class GameRoom(
+    val roomCode: String = "",
+    val hostId: String = "",
+    val categoryId: String = "",
+    val players: Map<String, RoomPlayer> = emptyMap(),
+    val status: String = "waiting",
+    val gameId: String = "",
+    val createdAt: Long = 0L
+)
+
+data class RoomPlayer(
     val userId: String = "",
     val displayName: String = "Pemain",
-    val categoryId: String = "",
-    val joinedAt: Long = 0L
+    val isReady: Boolean = false
 )

@@ -7,12 +7,13 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import kotlin.random.Random
 
 class FirestoreService {
     private val db = FirebaseModule.db
     private val usersCollection = db.collection("users")
     private val gamesCollection = db.collection("games")
-    private val matchmakingCollection = db.collection("matchmaking")
+    private val roomsCollection = db.collection("rooms")
 
     suspend fun createOrUpdateUser(userId: String, displayName: String) {
         val userRef = usersCollection.document(userId)
@@ -34,57 +35,86 @@ class FirestoreService {
         }
     }
 
-    suspend fun joinMatchmaking(ticket: MatchmakingTicket) {
-        matchmakingCollection.document(ticket.userId).set(ticket).await()
+    suspend fun updateDisplayName(userId: String, name: String) {
+        usersCollection.document(userId).update("displayName", name).await()
     }
 
-    suspend fun leaveMatchmaking(userId: String) {
-        matchmakingCollection.document(userId).delete().await()
+    suspend fun createRoom(hostId: String, hostName: String, categoryId: String): String {
+        val roomCode = generateRoomCode()
+        val room = mapOf(
+            "roomCode" to roomCode,
+            "hostId" to hostId,
+            "categoryId" to categoryId,
+            "players" to mapOf(
+                hostId to mapOf(
+                    "userId" to hostId,
+                    "displayName" to hostName,
+                    "isReady" to false
+                )
+            ),
+            "status" to "waiting",
+            "gameId" to "",
+            "createdAt" to FieldValue.serverTimestamp()
+        )
+        roomsCollection.document(roomCode).set(room).await()
+        return roomCode
     }
 
-    fun listenMatchmaking(categoryId: String): Flow<List<MatchmakingTicket>> = callbackFlow {
-        val listener = matchmakingCollection
-            .whereEqualTo("categoryId", categoryId)
+    suspend fun joinRoom(roomCode: String, userId: String, displayName: String): Boolean {
+        val roomRef = roomsCollection.document(roomCode)
+        val snapshot = roomRef.get().await()
+        val room = snapshot.toObject<GameRoom>() ?: return false
+        if (room.status != "waiting") return false
+
+        roomRef.update(
+            "players.$userId",
+            mapOf("userId" to userId, "displayName" to displayName, "isReady" to false)
+        ).await()
+        return true
+    }
+
+    suspend fun leaveRoom(roomCode: String, userId: String) {
+        val roomRef = roomsCollection.document(roomCode)
+        roomRef.update("players.$userId", FieldValue.delete()).await()
+    }
+
+    fun listenRoom(roomCode: String): Flow<GameRoom> = callbackFlow {
+        val listener = roomsCollection.document(roomCode)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    trySend(GameRoom(status = "error"))
                     return@addSnapshotListener
                 }
-                val tickets = snapshot?.documents?.mapNotNull { it.toObject<MatchmakingTicket>() } ?: emptyList()
-                trySend(tickets)
+                val room = snapshot?.toObject<GameRoom>() ?: GameRoom()
+                trySend(room)
             }
         awaitClose { listener.remove() }
     }
 
-    suspend fun createGame(
-        player1Id: String,
-        player1Name: String,
-        player2Id: String,
-        player2Name: String,
-        categoryId: String
-    ): String {
+    suspend fun startGameFromRoom(roomCode: String): String {
+        val roomRef = roomsCollection.document(roomCode)
+        val snapshot = roomRef.get().await()
+        val room = snapshot.toObject<GameRoom>() ?: return ""
+
+        val categoryId = room.categoryId
         val questions = QuestionBank.getQuestions(categoryId)
         val gameRef = gamesCollection.document()
+
+        val players = mutableMapOf<String, Map<String, Any>>()
+        room.players.forEach { (uid, player) ->
+            players[uid] = mapOf(
+                "userId" to uid,
+                "displayName" to player.displayName,
+                "score" to 0,
+                "correctCount" to 0,
+                "totalAnswered" to 0,
+                "isReady" to false
+            )
+        }
+
         val game = mapOf(
             "gameId" to gameRef.id,
-            "players" to mapOf(
-                player1Id to mapOf(
-                    "userId" to player1Id,
-                    "displayName" to player1Name,
-                    "score" to 0,
-                    "correctCount" to 0,
-                    "totalAnswered" to 0,
-                    "isReady" to false
-                ),
-                player2Id to mapOf(
-                    "userId" to player2Id,
-                    "displayName" to player2Name,
-                    "score" to 0,
-                    "correctCount" to 0,
-                    "totalAnswered" to 0,
-                    "isReady" to false
-                )
-            ),
+            "players" to players,
             "categoryId" to categoryId,
             "status" to "playing",
             "currentRound" to 0,
@@ -107,6 +137,8 @@ class FirestoreService {
             "createdAt" to FieldValue.serverTimestamp()
         )
         gameRef.set(game, SetOptions.merge()).await()
+
+        roomRef.update(mapOf("status" to "playing", "gameId" to gameRef.id)).await()
         return gameRef.id
     }
 
@@ -143,8 +175,7 @@ class FirestoreService {
             gamesCollection.document(gameId).update(
                 mapOf(
                     "currentRound" to nextRound,
-                    "roundStartTime" to (System.currentTimeMillis() + 2000),
-                    "players.${FirebaseModule.getUserId()}.isReady" to false
+                    "roundStartTime" to (System.currentTimeMillis() + 2000)
                 )
             ).await()
         }
@@ -155,11 +186,8 @@ class FirestoreService {
         val snapshot = gameRef.get().await()
         val game = snapshot.toObject<GameSession>() ?: return
         val players = game.players
-
         val winner = players.maxByOrNull { it.value.score }
         val winnerId = winner?.key ?: ""
-
-        val userId = FirebaseModule.getUserId() ?: return
 
         for ((uid, player) in players) {
             val userRef = usersCollection.document(uid)
@@ -176,17 +204,7 @@ class FirestoreService {
             ).await()
         }
 
-        gameRef.update(
-            mapOf(
-                "status" to "finished",
-                "winnerId" to winnerId
-            )
-        ).await()
-    }
-
-    suspend fun resetReadyStatus(gameId: String, userId: String) {
-        gamesCollection.document(gameId)
-            .update("players.$userId.isReady", false).await()
+        gameRef.update(mapOf("status" to "finished", "winnerId" to winnerId)).await()
     }
 
     fun getLeaderboard(): Flow<List<Map<String, Any?>>> = callbackFlow {
@@ -214,5 +232,10 @@ class FirestoreService {
                 trySend(snapshot?.data)
             }
         awaitClose { listener.remove() }
+    }
+
+    private fun generateRoomCode(): String {
+        val chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        return (1..6).map { chars[Random.nextInt(chars.length)] }.joinToString("")
     }
 }
