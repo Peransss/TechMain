@@ -32,6 +32,7 @@ import com.example.techmain.ui.battle.BattleMainScreen
 import com.example.techmain.ui.leaderboard.LeaderboardScreen
 import com.example.techmain.ui.navigation.Screen
 import com.example.techmain.ui.profile.ProfileScreen
+import com.example.techmain.ui.studio.CreatorWizardScreen
 import com.example.techmain.ui.studio.StudioScreen
 import com.example.techmain.ui.theme.TechMainTheme
 
@@ -68,22 +69,26 @@ fun MainScreen() {
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
-                screens.forEach { screen ->
-                    NavigationBarItem(
-                        icon = { Icon(screen.icon, contentDescription = screen.title) },
-                        label = { Text(screen.title) },
-                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
-                        onClick = {
-                            navController.navigate(screen.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentDestination = navBackStackEntry?.destination
+            val showBottomBar = screens.any { it.route == currentDestination?.route }
+
+            if (showBottomBar) {
+                NavigationBar {
+                    screens.forEach { screen ->
+                        NavigationBarItem(
+                            icon = { Icon(screen.icon, contentDescription = screen.title) },
+                            label = { Text(screen.title) },
+                            selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                            onClick = {
+                                navController.navigate(screen.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
@@ -94,7 +99,12 @@ fun MainScreen() {
             modifier = Modifier.fillMaxSize().padding(innerPadding)
         ) {
             composable(Screen.Battle.route) { BattleMainScreen() }
-            composable(Screen.Studio.route) { StudioScreen() }
+            composable(Screen.Studio.route) { 
+                StudioScreen(onNavigateToWizard = { navController.navigate(Screen.Wizard.route) }) 
+            }
+            composable(Screen.Wizard.route) {
+                CreatorWizardScreen(onBack = { navController.popBackStack() })
+            }
             composable(Screen.Leaderboard.route) {
                 LeaderboardScreen(onBack = { navController.popBackStack() })
             }

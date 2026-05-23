@@ -84,11 +84,15 @@ fun LobbyContent(viewModel: BattleViewModel) {
                 modifier = Modifier.fillMaxWidth().height(140.dp)
             ) {
                 items(featuredQuizzes) { quiz ->
+                    val isSelected = state.selectedCategory == quiz.id
                     Card(
+                        onClick = { viewModel.selectCategory(quiz.id) },
                         modifier = Modifier.size(width = 200.dp, height = 120.dp),
                         shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, NeonHackerPrimary),
-                        colors = CardDefaults.cardColors(containerColor = NeonHackerBackground)
+                        border = BorderStroke(2.dp, if (isSelected) Color.White else NeonHackerPrimary),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected) NeonHackerPrimary.copy(alpha = 0.2f) else NeonHackerBackground
+                        )
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(quiz.title, color = Color.White, fontWeight = FontWeight.Bold)

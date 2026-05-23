@@ -12,11 +12,12 @@ import kotlinx.coroutines.launch
 data class CreatorUiState(
     val myQuizzes: List<CustomQuiz> = emptyList(),
     val isLoading: Boolean = false,
+    val isSuccess: Boolean = false,
     val errorMessage: String? = null
 )
 
 class CreatorViewModel : ViewModel() {
-    private val firestoreService = FirestoreService()
+    private val firestoreService = FirebaseModule.firestoreService
     private val storage = FirebaseModule.storageService
     private val _state = MutableStateFlow(CreatorUiState())
     val state = _state.asStateFlow()
@@ -48,10 +49,11 @@ class CreatorViewModel : ViewModel() {
     fun saveQuiz(quiz: CustomQuiz, images: Map<String, android.net.Uri>) {
         val userId = FirebaseModule.getUserId() ?: return
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true)
+            _state.value = _state.value.copy(isLoading = true, errorMessage = null, isSuccess = false)
             try {
-                val quizId = firestoreService.createCustomQuiz(quiz)
-                val updatedQuestions = quiz.questions.map { question ->
+                val finalQuiz = quiz.copy(creatorId = userId)
+                val quizId = firestoreService.createCustomQuiz(finalQuiz)
+                val updatedQuestions = finalQuiz.questions.map { question ->
                     val imageUri = images[question.id]
                     if (imageUri != null) {
                         val imageUrl = storage.uploadQuizImage(userId, quizId, question.id, imageUri)
@@ -62,9 +64,9 @@ class CreatorViewModel : ViewModel() {
                     }
                 }
                 firestoreService.updateCustomQuizQuestions(quizId, updatedQuestions)
-                _state.value = _state.value.copy(isLoading = false)
+                _state.value = _state.value.copy(isLoading = false, isSuccess = true)
             } catch (e: Exception) {
-                _state.value = _state.value.copy(isLoading = false, errorMessage = "Gagal menyimpan kuis")
+                _state.value = _state.value.copy(isLoading = false, errorMessage = "Gagal menyimpan kuis: ${e.message}")
             }
         }
     }

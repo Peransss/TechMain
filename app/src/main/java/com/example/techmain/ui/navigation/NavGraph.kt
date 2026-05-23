@@ -12,4 +12,5 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object Studio : Screen("studio", "Studio", Icons.Default.Palette)
     data object Leaderboard : Screen("leaderboard", "Peringkat", Icons.Default.EmojiEvents)
     data object Profile : Screen("profile", "Profil", Icons.Default.Person)
+    data object Wizard : Screen("wizard", "Wizard", Icons.Default.Palette)
 }

@@ -26,13 +26,13 @@ import com.example.techmain.ui.theme.NeonHackerBorder
 import com.example.techmain.ui.theme.NeonHackerSecondary
 
 @Composable
-fun StudioScreen(viewModel: CreatorViewModel = viewModel()) {
+fun StudioScreen(viewModel: CreatorViewModel = viewModel(), onNavigateToWizard: () -> Unit) {
     val state by viewModel.state.collectAsState()
     Scaffold(
         containerColor = NeonHackerBackground,
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* Navigate to Wizard */ },
+                onClick = onNavigateToWizard,
                 containerColor = NeonHackerSecondary
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Tambah Kuis", tint = Color.Black)

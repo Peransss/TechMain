@@ -146,7 +146,27 @@ class FirestoreService {
         val room = snapshot.toObject<GameRoom>() ?: return ""
 
         val categoryId = room.categoryId
-        val questions = QuestionBank.getQuestions(categoryId)
+        
+        // Try to fetch from CustomQuiz first
+        val customQuizSnapshot = customQuizzesCollection.document(categoryId).get().await()
+        val questions = if (customQuizSnapshot.exists()) {
+            val customQuiz = customQuizSnapshot.toObject<CustomQuiz>()
+            customQuiz?.questions?.map { q ->
+                QuizQuestion(
+                    id = q.id,
+                    question = q.question,
+                    options = q.options,
+                    correctAnswer = q.correctAnswer,
+                    imageUrl = q.imageUrl,
+                    timeLimit = 20
+                )
+            } ?: emptyList()
+        } else {
+            QuestionBank.getQuestions(categoryId)
+        }
+
+        if (questions.isEmpty()) return ""
+
         val gameRef = gamesCollection.document()
 
         val players = mutableMapOf<String, Map<String, Any>>()
@@ -177,6 +197,7 @@ class FirestoreService {
                     "correctAnswer" to q.correctAnswer,
                     "difficulty" to q.difficulty,
                     "timeLimit" to q.timeLimit,
+                    "imageUrl" to q.imageUrl,
                     "round" to index
                 )
             },

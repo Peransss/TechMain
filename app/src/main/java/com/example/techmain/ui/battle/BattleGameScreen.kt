@@ -28,12 +28,58 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
     val myId = state.myUserId
     val me = game.players[myId]
     val currentQuestion = game.questions.getOrNull(game.currentRound)
+    val opponent = game.players.filterKeys { it != myId }.values.firstOrNull()
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        // ... (Header/Timer UI remains same)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            PlayerScoreCard(modifier = Modifier.weight(1f), name = me?.displayName ?: "Kamu", score = me?.score ?: 0, isMe = true)
+            Text(
+                text = "VS",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+            PlayerScoreCard(modifier = Modifier.weight(1f), name = opponent?.displayName ?: "???", score = opponent?.score ?: 0, isMe = false)
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = "Round ${game.currentRound + 1} / ${game.totalRounds}",
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        val timerProgress = state.timeLeft.toFloat() / game.roundTimeLimit.toFloat()
+        val timerColor by animateColorAsState(
+            targetValue = if (state.timeLeft > 5) MaterialTheme.colorScheme.primary else Color.Red,
+            label = "timerColor"
+        )
+        LinearProgressIndicator(
+            progress = { timerProgress },
+            modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+            color = timerColor,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+        Text(
+            text = "${state.timeLeft}",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = timerColor,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         if (currentQuestion != null) {
-            val imageUrl = (currentQuestion as? CustomQuestion)?.imageUrl
+            val imageUrl = currentQuestion.imageUrl
             if (!imageUrl.isNullOrEmpty()) {
                 AsyncImage(
                     model = imageUrl,
@@ -43,9 +89,8 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            val questionText = (currentQuestion as? CustomQuestion)?.question ?: (currentQuestion as? com.example.techmain.firebase.QuizQuestion)?.question ?: ""
             Text(
-                text = questionText,
+                text = currentQuestion.question,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -53,8 +98,7 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            val options = (currentQuestion as? CustomQuestion)?.options ?: (currentQuestion as? com.example.techmain.firebase.QuizQuestion)?.options ?: emptyList()
-            options.forEachIndexed { index, option ->
+            currentQuestion.options.forEachIndexed { index, option ->
                 val isSelected = state.selectedAnswer == index
                 Button(
                     onClick = { viewModel.selectAnswer(index) },
@@ -65,6 +109,38 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
                     Text(text = "${('A' + index)}. $option")
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun PlayerScoreCard(modifier: Modifier = Modifier, name: String, score: Int, isMe: Boolean) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = if (isMe)
+                MaterialTheme.colorScheme.primaryContainer
+            else MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier.size(32.dp).clip(CircleShape)
+                    .background(if (isMe) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = name.take(1).uppercase(),
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = name, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+            Text(text = "$score", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         }
     }
 }

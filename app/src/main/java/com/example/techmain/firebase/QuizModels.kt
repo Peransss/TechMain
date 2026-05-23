@@ -7,7 +7,8 @@ data class QuizQuestion(
     val options: List<String> = emptyList(),
     val correctAnswer: Int = 0,
     val difficulty: String = "medium",
-    val timeLimit: Int = 20
+    val timeLimit: Int = 20,
+    val imageUrl: String? = null
 )
 
 data class GamePlayer(

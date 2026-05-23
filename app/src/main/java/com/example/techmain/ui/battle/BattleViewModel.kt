@@ -40,7 +40,7 @@ data class BattleUiState(
 )
 
 class BattleViewModel : ViewModel() {
-    private val firestore = FirestoreService()
+    private val firestore = FirebaseModule.firestoreService
     private val _state = MutableStateFlow(BattleUiState())
     val state: StateFlow<BattleUiState> = _state.asStateFlow()
 
@@ -51,11 +51,14 @@ class BattleViewModel : ViewModel() {
     private var timerJob: Job? = null
     private var roomListenerJob: Job? = null
     private var botAnswerJob: Job? = null
+    private var featuredQuizzesJob: Job? = null
 
     fun init() {
         val userId = FirebaseModule.getUserId() ?: return
-        viewModelScope.launch {
-            firestore.fetchFeaturedQuizzes().collect { _featuredQuizzes.value = it }
+        if (featuredQuizzesJob == null) {
+            featuredQuizzesJob = viewModelScope.launch {
+                firestore.fetchFeaturedQuizzes().collect { _featuredQuizzes.value = it }
+            }
         }
         _state.value = _state.value.copy(myUserId = userId)
     }
@@ -78,9 +81,6 @@ class BattleViewModel : ViewModel() {
 
     fun startVsBot() {
         val userId = FirebaseModule.getUserId() ?: return
-        viewModelScope.launch {
-            firestore.fetchFeaturedQuizzes().collect { _featuredQuizzes.value = it }
-        }
         val categoryId = _state.value.selectedCategory
         if (categoryId.isEmpty()) return
         val difficulty = _state.value.difficulty
@@ -106,9 +106,6 @@ class BattleViewModel : ViewModel() {
 
     fun createRoom() {
         val userId = FirebaseModule.getUserId() ?: return
-        viewModelScope.launch {
-            firestore.fetchFeaturedQuizzes().collect { _featuredQuizzes.value = it }
-        }
         val categoryId = _state.value.selectedCategory
         if (categoryId.isEmpty()) return
 
@@ -132,9 +129,6 @@ class BattleViewModel : ViewModel() {
 
     fun joinRoom() {
         val userId = FirebaseModule.getUserId() ?: return
-        viewModelScope.launch {
-            firestore.fetchFeaturedQuizzes().collect { _featuredQuizzes.value = it }
-        }
         val code = _state.value.joinCode
         if (code.length != 6) return
 
@@ -254,9 +248,6 @@ class BattleViewModel : ViewModel() {
 
     private fun timeoutSubmit(game: GameSession) {
         val userId = FirebaseModule.getUserId() ?: return
-        viewModelScope.launch {
-            firestore.fetchFeaturedQuizzes().collect { _featuredQuizzes.value = it }
-        }
         if (_state.value.hasAnswered) return
         _state.value = _state.value.copy(hasAnswered = true, selectedAnswer = -1)
 
@@ -276,9 +267,6 @@ class BattleViewModel : ViewModel() {
     fun submitAnswer(selectedAnswer: Int = _state.value.selectedAnswer) {
         val game = _state.value.game
         val userId = FirebaseModule.getUserId() ?: return
-        viewModelScope.launch {
-            firestore.fetchFeaturedQuizzes().collect { _featuredQuizzes.value = it }
-        }
         val round = game.currentRound
         if (_state.value.hasAnswered) return
         val currentQuestion = game.questions.getOrNull(round) ?: return
