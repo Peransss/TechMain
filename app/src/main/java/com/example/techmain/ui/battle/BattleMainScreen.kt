@@ -18,6 +18,10 @@ fun BattleMainScreen(viewModel: BattleViewModel = viewModel()) {
         BattleScreen.WAITING_ROOM -> BattleLobbyScreen(viewModel = viewModel)
         BattleScreen.GAME -> BattleGameScreen(viewModel = viewModel)
         BattleScreen.RESULT -> BattleResultScreen(viewModel = viewModel)
-        BattleScreen.SOLO_PRACTICE -> BattleLobbyScreen(viewModel = viewModel)
+        BattleScreen.SOLO_PRACTICE -> SoloPracticeScreen(
+            categoryId = state.selectedCategory,
+            totalRounds = state.soloRounds,
+            onBack = { viewModel.playAgain() }
+        )
     }
 }
