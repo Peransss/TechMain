@@ -25,6 +25,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -59,6 +60,9 @@ fun BattleLobbyScreen(viewModel: BattleViewModel) {
         BattleScreen.WAITING_ROOM -> WaitingRoomScreen(viewModel = viewModel)
         BattleScreen.GAME -> BattleGameScreen(viewModel = viewModel)
         BattleScreen.RESULT -> BattleResultScreen(viewModel = viewModel)
+        BattleScreen.SOLO_PRACTICE -> {
+            Text("Loading...")
+        }
     }
 }
 
@@ -173,6 +177,15 @@ fun LobbyContent(viewModel: BattleViewModel) {
             Text("\uD83E\uDD16 VS BOT", fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(8.dp))
+        OutlinedButton(
+            onClick = { viewModel.showSoloSetup() },
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            enabled = state.selectedCategory.isNotEmpty(),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text("\uD83C\uDFAF LATIHAN (Solo)", fontWeight = FontWeight.Bold)
+        }
+        Spacer(modifier = Modifier.height(8.dp))
         FilledTonalButton(
             onClick = { viewModel.showJoinRoom() },
             modifier = Modifier.fillMaxWidth().height(52.dp),
@@ -187,6 +200,79 @@ fun LobbyContent(viewModel: BattleViewModel) {
     if (state.showDifficultyDialog) {
         DifficultyDialog(viewModel = viewModel)
     }
+
+    if (state.showModePicker) {
+        ModePickerDialog(viewModel = viewModel)
+    }
+
+    if (state.showSoloSetup) {
+        AlertDialog(
+            onDismissRequest = { viewModel.hideSoloSetup() },
+            title = { Text("Latihan Solo", fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("Pilih jumlah soal:", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.height(8.dp))
+                    listOf(5, 10).forEach { rounds ->
+                        val isSelected = state.soloRounds == rounds
+                        TextButton(
+                            onClick = { viewModel.setSoloRounds(rounds) },
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+                        ) {
+                            Text(
+                                "$rounds Soal",
+                                fontWeight = FontWeight.Bold,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { viewModel.startSoloPractice() }) {
+                    Text("MULAI", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = { TextButton(onClick = { viewModel.hideSoloSetup() }) { Text("BATAL") } }
+        )
+    }
+}
+
+@Composable
+fun ModePickerDialog(viewModel: BattleViewModel) {
+    val state by viewModel.state.collectAsState()
+    AlertDialog(
+        onDismissRequest = { viewModel.hideModePicker() },
+        title = { Text("Pilih Mode", fontWeight = FontWeight.Bold) },
+        text = {
+            Column {
+                val modes = listOf(
+                    Triple("casual", "Casual", "Standar 5 soal \u00B7 20 detik"),
+                    Triple("blitz", "Blitz", "Cepat 5 soal \u00B7 10 detik \u00B7 150 pts"),
+                    Triple("marathon", "Marathon", "10 soal \u00B7 15 detik \u00B7 50 pts"),
+                    Triple("powerup", "Power-Up", "5 soal + 3 power-ups (50:50, 2x, Freeze)")
+                )
+                modes.forEach { (modeId, title, desc) ->
+                    val isSelected = state.selectedMode == modeId
+                    TextButton(
+                        onClick = { viewModel.setMode(modeId) },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    ) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                title,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(desc, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = { viewModel.hideModePicker() }) { Text("BATAL") } }
+    )
 }
 
 @Composable

@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 enum class BattleScreen {
-    LOBBY, WAITING_ROOM, GAME, RESULT, JOIN_ROOM
+    LOBBY, WAITING_ROOM, GAME, RESULT, JOIN_ROOM, SOLO_PRACTICE
 }
 
 data class BattleUiState(
@@ -36,7 +36,14 @@ data class BattleUiState(
     val errorMessage: String = "",
     val isBotGame: Boolean = false,
     val difficulty: BotDifficulty = BotDifficulty.MEDIUM,
-    val showDifficultyDialog: Boolean = false
+    val showDifficultyDialog: Boolean = false,
+    val selectedMode: String = "casual",
+    val showModePicker: Boolean = false,
+    val pendingAction: String = "",
+    val eliminatedOptions: Set<Int> = emptySet(),
+    val doublePointsActive: Boolean = false,
+    val soloRounds: Int = 5,
+    val showSoloSetup: Boolean = false
 )
 
 class BattleViewModel : ViewModel() {
@@ -80,6 +87,11 @@ class BattleViewModel : ViewModel() {
     }
 
     fun startVsBot() {
+        if (_state.value.selectedCategory.isEmpty()) return
+        showModePickerForAction("vsBot")
+    }
+
+    private fun executeStartVsBot() {
         val userId = FirebaseModule.getUserId() ?: return
         val categoryId = _state.value.selectedCategory
         if (categoryId.isEmpty()) return
@@ -97,7 +109,7 @@ class BattleViewModel : ViewModel() {
                 )
 
                 listenRoom(roomCode)
-                firestore.startGameFromRoom(roomCode)
+                firestore.startGameFromRoom(roomCode, _state.value.selectedMode)
             } catch (e: Exception) {
                 _state.value = _state.value.copy(errorMessage = "Gagal memulai vs bot")
             }
@@ -105,6 +117,11 @@ class BattleViewModel : ViewModel() {
     }
 
     fun createRoom() {
+        if (_state.value.selectedCategory.isEmpty()) return
+        showModePickerForAction("createRoom")
+    }
+
+    private fun executeCreateRoom() {
         val userId = FirebaseModule.getUserId() ?: return
         val categoryId = _state.value.selectedCategory
         if (categoryId.isEmpty()) return
@@ -121,6 +138,39 @@ class BattleViewModel : ViewModel() {
                 _state.value = _state.value.copy(errorMessage = "Gagal membuat room")
             }
         }
+    }
+
+    fun showModePickerForAction(action: String) {
+        _state.value = _state.value.copy(showModePicker = true, pendingAction = action)
+    }
+
+    fun hideModePicker() {
+        _state.value = _state.value.copy(showModePicker = false, pendingAction = "")
+    }
+
+    fun setMode(mode: String) {
+        val action = _state.value.pendingAction
+        _state.value = _state.value.copy(selectedMode = mode, showModePicker = false)
+        when (action) {
+            "createRoom" -> executeCreateRoom()
+            "vsBot" -> executeStartVsBot()
+        }
+    }
+
+    fun showSoloSetup() {
+        _state.value = _state.value.copy(showSoloSetup = true)
+    }
+
+    fun hideSoloSetup() {
+        _state.value = _state.value.copy(showSoloSetup = false)
+    }
+
+    fun setSoloRounds(rounds: Int) {
+        _state.value = _state.value.copy(soloRounds = rounds)
+    }
+
+    fun startSoloPractice() {
+        _state.value = _state.value.copy(showSoloSetup = false, screen = BattleScreen.SOLO_PRACTICE)
     }
 
     fun onJoinCodeChange(code: String) {
@@ -172,7 +222,7 @@ class BattleViewModel : ViewModel() {
         val roomCode = _state.value.roomCode
         viewModelScope.launch {
             try {
-                firestore.startGameFromRoom(roomCode)
+                firestore.startGameFromRoom(roomCode, _state.value.selectedMode)
             } catch (e: Exception) {
                 _state.value = _state.value.copy(errorMessage = "Gagal memulai game")
             }
@@ -200,7 +250,9 @@ class BattleViewModel : ViewModel() {
                             lastRound = game.currentRound
                             _state.value = _state.value.copy(
                                 selectedAnswer = -1,
-                                hasAnswered = false
+                                hasAnswered = false,
+                                eliminatedOptions = emptySet(),
+                                doublePointsActive = false
                             )
                             startRoundTimer()
                             if (_state.value.isBotGame) {
@@ -250,7 +302,7 @@ class BattleViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
-                firestore.submitAnswer(game.gameId, userId, -1, false)
+                firestore.submitAnswer(game.gameId, userId, -1, false, game.mode)
             } catch (e: Exception) {
                 _state.value = _state.value.copy(errorMessage = "Gagal mengirim jawaban")
             }
@@ -273,7 +325,7 @@ class BattleViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
-                firestore.submitAnswer(game.gameId, userId, selectedAnswer, isCorrect)
+                firestore.submitAnswer(game.gameId, userId, selectedAnswer, isCorrect, game.mode)
             } catch (e: Exception) {
                 _state.value = _state.value.copy(errorMessage = "Gagal mengirim jawaban")
             }
@@ -301,7 +353,10 @@ class BattleViewModel : ViewModel() {
         timerJob?.cancel()
         botAnswerJob?.cancel()
         roomListenerJob?.cancel()
-        _state.value = BattleUiState(myUserId = _state.value.myUserId)
+        _state.value = BattleUiState(
+            myUserId = _state.value.myUserId,
+            selectedMode = _state.value.selectedMode
+        )
     }
 
     fun leaveRoom() {
