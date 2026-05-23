@@ -29,6 +29,15 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.graphics.Color
+import com.example.techmain.firebase.CustomQuiz
+import com.example.techmain.ui.theme.NeonHackerBackground
+import com.example.techmain.ui.theme.NeonHackerBorder
+import com.example.techmain.ui.theme.NeonHackerPrimary
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -64,6 +73,32 @@ fun LobbyContent(viewModel: BattleViewModel) {
         Spacer(modifier = Modifier.height(4.dp))
         Text("Battle real-time dengan pemain lain!", style = MaterialTheme.typography.bodyMedium)
         Spacer(modifier = Modifier.height(24.dp))
+
+        
+        val featuredQuizzes by viewModel.featuredQuizzes.collectAsState()
+        if (featuredQuizzes.isNotEmpty()) {
+            Text("Featured Quizzes", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = NeonHackerPrimary)
+            Spacer(modifier = Modifier.height(12.dp))
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth().height(140.dp)
+            ) {
+                items(featuredQuizzes) { quiz ->
+                    Card(
+                        modifier = Modifier.size(width = 200.dp, height = 120.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, NeonHackerPrimary),
+                        colors = CardDefaults.cardColors(containerColor = NeonHackerBackground)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(quiz.title, color = Color.White, fontWeight = FontWeight.Bold)
+                            Text("${quiz.questions.size} Questions", color = NeonHackerPrimary, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+        }
 
         Text("Pilih Kategori", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(12.dp))

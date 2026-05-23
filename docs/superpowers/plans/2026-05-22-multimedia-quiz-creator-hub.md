@@ -291,20 +291,19 @@ git commit -m "feat: integrate studio tab into navigation and ui"
 **Files:**
 - Create: `app/src/main/java/com/example/techmain/ui/studio/CreatorWizardScreen.kt`
 
-- [ ] **Step 1: Build Wizard UI with Image Selection**
+- [x] **Step 1: Build Wizard UI with Image Selection**
 
 ```kotlin
-// Use ActivityResultContracts.GetContent() to pick images
-// Show preview in a NeonHackerBorder frame
+// CreatorWizardScreen.kt implemented using ActivityResultContracts.GetContent() and AnimatedContent
 ```
 
-- [ ] **Step 2: Implement Save/Publish logic in CreatorViewModel**
+- [x] **Step 2: Implement Save/Publish logic in CreatorViewModel**
 
 ```kotlin
-// Handle sequential uploads of images to Storage before saving CustomQuiz to Firestore
+// Implemented handle sequential uploads to Firebase Storage before saving to Firestore
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/src/main/java/com/example/techmain/ui/studio/CreatorWizardScreen.kt
@@ -319,21 +318,19 @@ git commit -m "feat: implement creator wizard with multimedia upload"
 - Modify: `app/src/main/java/com/example/techmain/ui/battle/BattleMainScreen.kt`
 - Modify: `app/src/main/java/com/example/techmain/ui/battle/BattleGameScreen.kt`
 
-- [ ] **Step 1: Add Featured Carousel to BattleMainScreen**
-
-- [ ] **Step 2: Update BattleGameScreen to show AsyncImage (Coil)**
+- [x] **Step 1: Add Featured Carousel to BattleMainScreen**
 
 ```kotlin
-if (currentQuestion.imageUrl != null) {
-    AsyncImage(
-        model = currentQuestion.imageUrl,
-        contentDescription = null,
-        modifier = Modifier.fillMaxWidth().height(200.dp).border(2.dp, NeonHackerPrimary)
-    )
-}
+// LazyRow implementation for featured CustomQuiz items
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 2: Update BattleGameScreen to show AsyncImage (Coil)**
+
+```kotlin
+// Coil AsyncImage integrated for question images
+```
+
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/src/main/java/com/example/techmain/ui/battle/BattleMainScreen.kt app/src/main/java/com/example/techmain/ui/battle/BattleGameScreen.kt
