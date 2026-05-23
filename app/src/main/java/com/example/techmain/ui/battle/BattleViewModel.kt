@@ -172,10 +172,7 @@ class BattleViewModel : ViewModel() {
         val roomCode = _state.value.roomCode
         viewModelScope.launch {
             try {
-                val gameId = firestore.startGameFromRoom(roomCode)
-                if (gameId.isNotEmpty()) {
-                    _state.value = _state.value.copy(gameId = gameId)
-                }
+                firestore.startGameFromRoom(roomCode)
             } catch (e: Exception) {
                 _state.value = _state.value.copy(errorMessage = "Gagal memulai game")
             }

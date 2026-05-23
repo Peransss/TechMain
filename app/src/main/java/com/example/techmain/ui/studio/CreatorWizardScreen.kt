@@ -12,6 +12,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.techmain.firebase.CustomQuestion
@@ -81,6 +83,9 @@ fun MetadataStep(title: String, onTitleChange: (String) -> Unit, onNext: () -> U
 @Composable
 fun QuestionStep(questions: List<CustomQuestion>, onQuestionsChange: (List<CustomQuestion>) -> Unit, onNext: () -> Unit, onBack: () -> Unit) {
     var newQuestionText by remember { mutableStateOf("") }
+    val options = remember { mutableStateListOf("", "", "", "") }
+    var correctAnswer by remember { mutableIntStateOf(0) }
+
     Column {
         Text("Langkah 2: Tambah Pertanyaan", style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(16.dp))
@@ -88,7 +93,12 @@ fun QuestionStep(questions: List<CustomQuestion>, onQuestionsChange: (List<Custo
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(questions) { q -> 
                 Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                    Text(q.question, modifier = Modifier.padding(12.dp))
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(q.question, fontWeight = FontWeight.Bold)
+                        q.options.forEachIndexed { index, opt ->
+                            Text("${('A' + index)}. $opt", color = if (index == q.correctAnswer) MaterialTheme.colorScheme.primary else Color.Gray)
+                        }
+                    }
                 }
             }
         }
@@ -100,11 +110,34 @@ fun QuestionStep(questions: List<CustomQuestion>, onQuestionsChange: (List<Custo
             label = { Text("Pertanyaan Baru") }, 
             modifier = Modifier.fillMaxWidth()
         )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("Opsi Jawaban (Pilih satu yang benar):", style = MaterialTheme.typography.labelMedium)
+        options.forEachIndexed { index, opt ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(selected = correctAnswer == index, onClick = { correctAnswer = index })
+                OutlinedTextField(
+                    value = opt, 
+                    onValueChange = { options[index] = it }, 
+                    label = { Text("Opsi ${('A' + index)}") },
+                    modifier = Modifier.weight(1f).padding(vertical = 2.dp)
+                )
+            }
+        }
+
         Button(
             onClick = { 
-                onQuestionsChange(questions + CustomQuestion(id = UUID.randomUUID().toString(), question = newQuestionText, options = listOf("Opsi 1", "Opsi 2", "Opsi 3", "Opsi 4")))
+                onQuestionsChange(questions + CustomQuestion(
+                    id = UUID.randomUUID().toString(), 
+                    question = newQuestionText, 
+                    options = options.toList(),
+                    correctAnswer = correctAnswer
+                ))
                 newQuestionText = ""
+                options.fill("")
+                correctAnswer = 0
             },
+            enabled = newQuestionText.isNotEmpty() && options.all { it.isNotEmpty() },
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
         ) { Text("Tambah Pertanyaan") }
         

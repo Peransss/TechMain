@@ -100,14 +100,54 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
 
             currentQuestion.options.forEachIndexed { index, option ->
                 val isSelected = state.selectedAnswer == index
+                val isCorrectAnswer = currentQuestion.correctAnswer == index && state.hasAnswered
+                val isWrongSelection = isSelected && !(currentQuestion.correctAnswer == index)
+
+                val bgColor by animateColorAsState(
+                    targetValue = when {
+                        state.hasAnswered && isCorrectAnswer -> Color(0xFF4CAF50)
+                        state.hasAnswered && isWrongSelection -> Color(0xFFE53935)
+                        isSelected -> MaterialTheme.colorScheme.primaryContainer
+                        else -> MaterialTheme.colorScheme.surfaceVariant
+                    },
+                    label = "optionBg"
+                )
+
                 Button(
                     onClick = { viewModel.selectAnswer(index) },
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = bgColor),
                     enabled = !state.hasAnswered
                 ) {
-                    Text(text = "${('A' + index)}. $option")
+                    Text(
+                        text = "${('A' + index)}. $option",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Start,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                    )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (!state.hasAnswered) {
+                Button(
+                    onClick = { viewModel.submitAnswer() },
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    enabled = state.selectedAnswer >= 0
+                ) {
+                    Text("KONFIRMASI", fontWeight = FontWeight.Bold)
+                }
+            } else {
+                Text(
+                    text = "Menunggu lawan...",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
