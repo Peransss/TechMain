@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.techmain.ui.theme.NeonSlateBackground
 import com.example.techmain.ui.theme.NeonSlateSurfaceBorder
-import com.example.techmain.ui.theme.NeonSlateSecondary
+import com.example.techmain.ui.theme.NeonSlatePrimary
 
 @Composable
 fun StudioScreen(viewModel: CreatorViewModel = viewModel(), onNavigateToWizard: () -> Unit) {
@@ -33,7 +33,7 @@ fun StudioScreen(viewModel: CreatorViewModel = viewModel(), onNavigateToWizard: 
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onNavigateToWizard,
-                containerColor = NeonSlateSecondary
+                containerColor = NeonSlatePrimary
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Tambah Kuis", tint = Color.Black)
             }
