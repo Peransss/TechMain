@@ -20,7 +20,8 @@ data class ProfileState(
     val losses: Int = 0,
     val totalGames: Int = 0,
     val correctAnswers: Int = 0,
-    val totalAnswers: Int = 0
+    val totalAnswers: Int = 0,
+    val bestScores: Map<String, Int> = emptyMap()
 )
 
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
@@ -41,13 +42,16 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
             firestore.getUserStats(userId).collect { stats ->
                 if (stats != null) {
+                    val rawScores = stats["bestScores"] as? Map<*, *>
+                    val bestScores = rawScores?.mapKeys { it.key.toString() }?.mapValues { (_, v) -> (v as? Long)?.toInt() ?: 0 } ?: emptyMap()
                     _state.value = _state.value.copy(
                         rating = (stats["rating"] as? Long)?.toInt() ?: 1000,
                         wins = (stats["wins"] as? Long)?.toInt() ?: 0,
                         losses = (stats["losses"] as? Long)?.toInt() ?: 0,
                         totalGames = (stats["totalGames"] as? Long)?.toInt() ?: 0,
                         correctAnswers = (stats["correctAnswers"] as? Long)?.toInt() ?: 0,
-                        totalAnswers = (stats["totalAnswers"] as? Long)?.toInt() ?: 0
+                        totalAnswers = (stats["totalAnswers"] as? Long)?.toInt() ?: 0,
+                        bestScores = bestScores
                     )
                 }
             }

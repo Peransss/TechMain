@@ -12,8 +12,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.techmain.game.SoloPracticeConfig
 import com.example.techmain.game.SoloPracticeState
+import com.example.techmain.firebase.FirebaseModule
+import com.example.techmain.firebase.FirestoreService
 import com.example.techmain.ui.theme.NeonSlateGold
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun SoloPracticeScreen(
@@ -27,6 +30,17 @@ fun SoloPracticeScreen(
                 config = SoloPracticeConfig(categoryId = categoryId, totalRounds = totalRounds)
             ).start()
         )
+    }
+
+    val firestore = remember { FirestoreService() }
+
+    LaunchedEffect(state.isFinished) {
+        if (state.isFinished) {
+            val userId = FirebaseModule.getUserId()
+            if (userId != null) {
+                firestore.updateBestScore(userId, categoryId, state.score)
+            }
+        }
     }
 
     LaunchedEffect(state.status, state.currentRound) {

@@ -98,6 +98,35 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                     )
                 }
             }
+
+            if (state.bestScores.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+                        Text("Category Mastery", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        state.bestScores.forEach { (categoryId, score) ->
+                            val tier = when {
+                                score >= 2000 -> "\uD83E\uDD47 Gold"
+                                score >= 1000 -> "\uD83E\uDD48 Silver"
+                                score >= 500 -> "\uD83E\uDD49 Bronze"
+                                else -> "\u26AA"
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(categoryId.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.bodyMedium)
+                                Text("$tier $score", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
