@@ -140,7 +140,7 @@ class FirestoreService {
         awaitClose { listener.remove() }
     }
 
-    suspend fun startGameFromRoom(roomCode: String): String {
+    suspend fun startGameFromRoom(roomCode: String, mode: String = "casual"): String {
         val roomRef = roomsCollection.document(roomCode)
         val snapshot = roomRef.get().await()
         val room = snapshot.toObject<GameRoom>() ?: return ""
@@ -167,6 +167,14 @@ class FirestoreService {
 
         if (questions.isEmpty()) return ""
 
+        val totalRounds = if (mode == "marathon") 10 else questions.size
+        val roundTimeLimit = when (mode) {
+            "blitz" -> 10
+            "marathon" -> 15
+            else -> 20
+        }
+        val finalQuestions = questions.shuffled().take(totalRounds)
+
         val gameRef = gamesCollection.document()
 
         val players = mutableMapOf<String, Map<String, Any>>()
@@ -187,8 +195,8 @@ class FirestoreService {
             "categoryId" to categoryId,
             "status" to "playing",
             "currentRound" to 0,
-            "totalRounds" to questions.size,
-            "questions" to questions.mapIndexed { index, q ->
+            "totalRounds" to finalQuestions.size,
+            "questions" to finalQuestions.mapIndexed { index, q ->
                 mapOf(
                     "id" to q.id,
                     "categoryId" to q.categoryId,
@@ -202,7 +210,8 @@ class FirestoreService {
                 )
             },
             "roundStartTime" to (System.currentTimeMillis() + 3000),
-            "roundTimeLimit" to 20,
+            "roundTimeLimit" to roundTimeLimit,
+            "mode" to mode,
             "winnerId" to "",
             "createdAt" to System.currentTimeMillis()
         )
@@ -225,13 +234,18 @@ class FirestoreService {
         awaitClose { listener.remove() }
     }
 
-    suspend fun submitAnswer(gameId: String, playerId: String, selectedAnswer: Int, isCorrect: Boolean) {
+    suspend fun submitAnswer(gameId: String, playerId: String, selectedAnswer: Int, isCorrect: Boolean, mode: String = "casual") {
         val gameRef = gamesCollection.document(gameId)
+        val points = when (mode) {
+            "blitz" -> 150L
+            "marathon" -> 50L
+            else -> 100L
+        }
         gameRef.update(
             mapOf(
                 "players.$playerId.totalAnswered" to FieldValue.increment(1L),
                 "players.$playerId.correctCount" to FieldValue.increment(if (isCorrect) 1L else 0L),
-                "players.$playerId.score" to FieldValue.increment(if (isCorrect) 100L else 0L),
+                "players.$playerId.score" to FieldValue.increment(if (isCorrect) points else 0L),
                 "players.$playerId.isReady" to true
             )
         ).await()
