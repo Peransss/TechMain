@@ -34,9 +34,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.graphics.Color
 import com.example.techmain.firebase.CustomQuiz
-import com.example.techmain.ui.theme.NeonHackerBackground
-import com.example.techmain.ui.theme.NeonHackerBorder
-import com.example.techmain.ui.theme.NeonHackerPrimary
+import com.example.techmain.ui.theme.NeonSlateBackground
+import com.example.techmain.ui.theme.NeonSlateSurfaceBorder
+import com.example.techmain.ui.theme.NeonSlatePrimary
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -77,7 +77,7 @@ fun LobbyContent(viewModel: BattleViewModel) {
         
         val featuredQuizzes by viewModel.featuredQuizzes.collectAsState()
         if (featuredQuizzes.isNotEmpty()) {
-            Text("Featured Quizzes", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = NeonHackerPrimary)
+            Text("Featured Quizzes", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = NeonSlatePrimary)
             Spacer(modifier = Modifier.height(12.dp))
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -89,14 +89,14 @@ fun LobbyContent(viewModel: BattleViewModel) {
                         onClick = { viewModel.selectCategory(quiz.id) },
                         modifier = Modifier.size(width = 200.dp, height = 120.dp),
                         shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(2.dp, if (isSelected) Color.White else NeonHackerPrimary),
+                        border = BorderStroke(2.dp, if (isSelected) Color.White else NeonSlatePrimary),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected) NeonHackerPrimary.copy(alpha = 0.2f) else NeonHackerBackground
+                            containerColor = if (isSelected) NeonSlatePrimary.copy(alpha = 0.2f) else NeonSlateBackground
                         )
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(quiz.title, color = Color.White, fontWeight = FontWeight.Bold)
-                            Text("${quiz.questions.size} Questions", color = NeonHackerPrimary, style = MaterialTheme.typography.bodySmall)
+                            Text("${quiz.questions.size} Questions", color = NeonSlatePrimary, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }

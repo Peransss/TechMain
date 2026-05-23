@@ -28,7 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.techmain.ui.theme.RPGQuestGold
+import com.example.techmain.ui.theme.NeonSlateGold
 
 @Composable
 fun BattleResultScreen(viewModel: BattleViewModel) {
@@ -48,14 +48,14 @@ fun BattleResultScreen(viewModel: BattleViewModel) {
             imageVector = Icons.Default.EmojiEvents,
             contentDescription = null,
             modifier = Modifier.size(96.dp),
-            tint = if (isWinner) RPGQuestGold else MaterialTheme.colorScheme.onSurfaceVariant
+            tint = if (isWinner) NeonSlateGold else MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = if (isWinner) "KAMU MENANG!" else "KALAH",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
-            color = if (isWinner) RPGQuestGold else MaterialTheme.colorScheme.error
+            color = if (isWinner) NeonSlateGold else MaterialTheme.colorScheme.error
         )
 
         Spacer(modifier = Modifier.height(32.dp))

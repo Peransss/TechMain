@@ -2,25 +2,14 @@ package com.example.techmain.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
-
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
-
-val RPGQuestGold = Color(0xFFFFD700)
-val RPGQuestGoldDark = Color(0xFFB8860B)
-val RPGHpRed = Color(0xFFE53935)
-val RpgManaBlue = Color(0xFF1E88E5)
-val RpgXpGreen = Color(0xFF43A047)
-val RpgBgDark = Color(0xFF1A1A2E)
-val RpgBgSurface = Color(0xFF16213E)
-val RpgAccentOrange = Color(0xFFE67E22)
-
-val NeonHackerBackground = Color(0xFF0A0A0C)
-val NeonHackerSurface = Color(0xFF121217)
-val NeonHackerPrimary = Color(0xFF00FFFF) // Cyan
-val NeonHackerSecondary = Color(0xFF39FF14) // Lime Green
-val NeonHackerBorder = Color(0xFF1F1F2E)
+val NeonSlateBackground = Color(0xFF0F172A)
+val NeonSlateSurface = Color(0xFF1E293B)
+val NeonSlateSurfaceBorder = Color(0xFF334155)
+val NeonSlatePrimary = Color(0xFF22D3EE)
+val NeonSlateSecondary = Color(0xFF818CF8)
+val NeonSlateAccent = Color(0xFFF472B6)
+val NeonSlateSuccess = Color(0xFF34D399)
+val NeonSlateError = Color(0xFFFB7185)
+val NeonSlateGold = Color(0xFFFBBF24)
+val NeonSlateTextPrimary = Color(0xFFF1F5F9)
+val NeonSlateTextSecondary = Color(0xFF94A3B8)

@@ -40,7 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.techmain.ui.theme.RPGQuestGold
+import com.example.techmain.ui.theme.NeonSlateGold
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -178,7 +178,7 @@ fun LeaderboardRow(rank: Int, entry: LeaderboardEntry) {
                 text = "${entry.rating}",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = RPGQuestGold
+                color = NeonSlateGold
             )
         }
     }

@@ -19,7 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.techmain.firebase.CustomQuestion
-import com.example.techmain.ui.theme.NeonHackerPrimary
+import com.example.techmain.ui.theme.NeonSlatePrimary
 
 @Composable
 fun BattleGameScreen(viewModel: BattleViewModel) {
@@ -84,7 +84,7 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
                 AsyncImage(
                     model = imageUrl,
                     contentDescription = null,
-                    modifier = Modifier.fillMaxWidth().height(200.dp).border(2.dp, NeonHackerPrimary)
+                    modifier = Modifier.fillMaxWidth().height(200.dp).border(2.dp, NeonSlatePrimary)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }

@@ -21,19 +21,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.techmain.ui.theme.NeonHackerBackground
-import com.example.techmain.ui.theme.NeonHackerBorder
-import com.example.techmain.ui.theme.NeonHackerSecondary
+import com.example.techmain.ui.theme.NeonSlateBackground
+import com.example.techmain.ui.theme.NeonSlateSurfaceBorder
+import com.example.techmain.ui.theme.NeonSlateSecondary
 
 @Composable
 fun StudioScreen(viewModel: CreatorViewModel = viewModel(), onNavigateToWizard: () -> Unit) {
     val state by viewModel.state.collectAsState()
     Scaffold(
-        containerColor = NeonHackerBackground,
+        containerColor = NeonSlateBackground,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onNavigateToWizard,
-                containerColor = NeonHackerSecondary
+                containerColor = NeonSlateSecondary
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Tambah Kuis", tint = Color.Black)
             }
@@ -45,7 +45,7 @@ fun StudioScreen(viewModel: CreatorViewModel = viewModel(), onNavigateToWizard: 
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp)
-                        .border(1.dp, NeonHackerBorder, MaterialTheme.shapes.medium)
+                        .border(1.dp, NeonSlateSurfaceBorder, MaterialTheme.shapes.medium)
                         .padding(16.dp)
                 ) {
                     Text(text = quiz.title, color = Color.White)
