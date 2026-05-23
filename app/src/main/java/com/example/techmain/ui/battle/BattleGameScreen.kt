@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.techmain.firebase.CustomQuestion
+import com.example.techmain.ui.theme.NeonSlateGold
 import com.example.techmain.ui.theme.NeonSlatePrimary
 
 @Composable
@@ -79,6 +80,14 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
         Spacer(modifier = Modifier.height(16.dp))
 
         if (currentQuestion != null) {
+            Text(
+                text = game.mode.replaceFirstChar { it.uppercase() },
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+
             val imageUrl = currentQuestion.imageUrl
             if (!imageUrl.isNullOrEmpty()) {
                 AsyncImage(
@@ -99,6 +108,7 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
             Spacer(modifier = Modifier.height(16.dp))
 
             currentQuestion.options.forEachIndexed { index, option ->
+                val isEliminated = state.eliminatedOptions.contains(index)
                 val isSelected = state.selectedAnswer == index
                 val isCorrectAnswer = currentQuestion.correctAnswer == index && state.hasAnswered
                 val isWrongSelection = isSelected && !(currentQuestion.correctAnswer == index)
@@ -117,16 +127,35 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
                     onClick = { viewModel.selectAnswer(index) },
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = bgColor),
-                    enabled = !state.hasAnswered
+                    colors = ButtonDefaults.buttonColors(containerColor = if (isEliminated) Color.DarkGray else bgColor),
+                    enabled = !state.hasAnswered && !isEliminated
                 ) {
                     Text(
-                        text = "${('A' + index)}. $option",
+                        text = if (isEliminated) "" else "${('A' + index)}. $option",
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Start,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                     )
                 }
+            }
+
+            if (game.mode == "powerup" && !state.hasAnswered) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    PowerUpButton("50:50", onClick = { viewModel.usePowerUp("fiftyFifty") }, isAvailable = me?.powerUps?.get("fiftyFifty") == true)
+                    PowerUpButton("2x Poin", onClick = { viewModel.usePowerUp("doublePoints") }, isAvailable = me?.powerUps?.get("doublePoints") == true)
+                    PowerUpButton("Freeze", onClick = { viewModel.usePowerUp("timeFreeze") }, isAvailable = me?.powerUps?.get("timeFreeze") == true)
+                }
+            }
+
+            if (state.doublePointsActive) {
+                Text(
+                    "Double Points Aktif!",
+                    color = NeonSlateGold,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -182,5 +211,20 @@ fun PlayerScoreCard(modifier: Modifier = Modifier, name: String, score: Int, isM
             Text(text = name, style = MaterialTheme.typography.labelSmall, maxLines = 1)
             Text(text = "$score", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         }
+    }
+}
+
+@Composable
+fun PowerUpButton(label: String, onClick: () -> Unit, isAvailable: Boolean) {
+    Button(
+        onClick = onClick,
+        enabled = isAvailable,
+        shape = RoundedCornerShape(8.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.secondary,
+            contentColor = MaterialTheme.colorScheme.onSecondary
+        )
+    ) {
+        Text(label, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
     }
 }

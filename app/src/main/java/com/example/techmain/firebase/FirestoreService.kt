@@ -302,6 +302,27 @@ class FirestoreService {
         gameRef.update(mapOf("status" to "finished", "winnerId" to winnerId)).await()
     }
 
+    suspend fun usePowerUp(gameId: String, playerId: String, powerUpType: String) {
+        val gameRef = gamesCollection.document(gameId)
+        gameRef.update("players.$playerId.powerUps.$powerUpType", false).await()
+    }
+
+    suspend fun freezeOpponent(gameId: String, playerId: String, durationMs: Long) {
+        val gameRef = gamesCollection.document(gameId)
+        gameRef.update("players.$playerId.timeFrozenUntil", System.currentTimeMillis() + durationMs).await()
+    }
+
+    suspend fun updateBestScore(userId: String, categoryId: String, score: Int) {
+        val userRef = usersCollection.document(userId)
+        db.runTransaction { transaction ->
+            val snapshot = transaction.get(userRef)
+            val current = (snapshot.getLong("bestScores.$categoryId") ?: 0L).toInt()
+            if (score > current) {
+                transaction.update(userRef, "bestScores.$categoryId", score)
+            }
+        }.await()
+    }
+
     fun getLeaderboard(): Flow<List<Map<String, Any?>>> = callbackFlow {
         val listener = usersCollection
             .orderBy("rating", com.google.firebase.firestore.Query.Direction.DESCENDING)

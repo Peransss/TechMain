@@ -348,6 +348,31 @@ class BattleViewModel : ViewModel() {
         }
     }
 
+    fun usePowerUp(type: String) {
+        val game = _state.value.game
+        val userId = _state.value.myUserId
+        viewModelScope.launch {
+            try {
+                when (type) {
+                    "fiftyFifty" -> {
+                        firestore.usePowerUp(game.gameId, userId, type)
+                        val q = game.questions.getOrNull(game.currentRound) ?: return@launch
+                        val wrongIndices = q.options.indices.filter { it != q.correctAnswer }.shuffled().take(2)
+                        _state.value = _state.value.copy(eliminatedOptions = wrongIndices.toSet())
+                    }
+                    "doublePoints" -> {
+                        firestore.usePowerUp(game.gameId, userId, type)
+                        _state.value = _state.value.copy(doublePointsActive = true)
+                    }
+                    "timeFreeze" -> {
+                        firestore.usePowerUp(game.gameId, userId, type)
+                        firestore.freezeOpponent(game.gameId, userId, 5000L)
+                    }
+                }
+            } catch (_: Exception) { }
+        }
+    }
+
     fun playAgain() {
         gameListenerJob?.cancel()
         timerJob?.cancel()
