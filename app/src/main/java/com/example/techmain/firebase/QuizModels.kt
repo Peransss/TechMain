@@ -17,7 +17,14 @@ data class GamePlayer(
     val score: Int = 0,
     val correctCount: Int = 0,
     val totalAnswered: Int = 0,
-    val isReady: Boolean = false
+    val isReady: Boolean = false,
+    val powerUps: Map<String, Boolean> = mapOf(
+        "fiftyFifty" to true,
+        "doublePoints" to true,
+        "timeFreeze" to true
+    ),
+    val activeDoubleMultiplier: Float = 1f,
+    val timeFrozenUntil: Long = 0L
 )
 
 data class GameSession(
@@ -31,7 +38,8 @@ data class GameSession(
     val roundStartTime: Long = 0L,
     val roundTimeLimit: Int = 20,
     val winnerId: String = "",
-    val createdAt: Long = 0L
+    val createdAt: Long = 0L,
+    val mode: String = "casual"
 )
 
 data class GameRoom(
