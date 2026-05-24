@@ -55,8 +55,8 @@ data class SoloPracticeState(
         val isFinished = nextRound >= totalRounds
 
         return copy(
-            selectedAnswer = answerIndex,
-            hasAnswered = true,
+            selectedAnswer = -1,    // DIPERBAIKI: Reset pilihan jawaban untuk soal berikutnya
+            hasAnswered = false,    // DIPERBAIKI: Reset status agar soal berikutnya bisa dijawab
             score = score + points,
             correctCount = correctCount + (if (isCorrect) 1 else 0),
             totalAnswered = totalAnswered + 1,
@@ -76,7 +76,7 @@ data class SoloPracticeState(
         val isFinished = nextRound >= totalRounds
         return copy(
             selectedAnswer = -1,
-            hasAnswered = true,
+            hasAnswered = false,    // DIPERBAIKI: Reset status agar soal berikutnya bisa dijawab saat waktu habis
             totalAnswered = totalAnswered + 1,
             streak = 0,
             currentRound = nextRound,

@@ -44,7 +44,9 @@ data class BattleUiState(
     val eliminatedOptions: Set<Int> = emptySet(),
     val doublePointsActive: Boolean = false,
     val soloRounds: Int = 5,
-    val showSoloSetup: Boolean = false
+    val showSoloSetup: Boolean = false,
+    // Penanda baru untuk mengunci UI selama menampilkan jawaban benar
+    val isShowingCorrectAnswer: Boolean = false
 )
 
 class BattleViewModel : ViewModel() {
@@ -61,6 +63,9 @@ class BattleViewModel : ViewModel() {
     private var botAnswerJob: Job? = null
     private var featuredQuizzesJob: Job? = null
 
+    private var advancingRound: Int = -1
+    private var botHasAnswered: Boolean = false
+
     fun init() {
         val userId = FirebaseModule.getUserId() ?: return
         if (featuredQuizzesJob == null) {
@@ -69,6 +74,8 @@ class BattleViewModel : ViewModel() {
             }
         }
         _state.value = _state.value.copy(myUserId = userId)
+        advancingRound = -1
+        botHasAnswered = false
     }
 
     fun selectCategory(categoryId: String) {
@@ -96,7 +103,6 @@ class BattleViewModel : ViewModel() {
         val userId = FirebaseModule.getUserId() ?: return
         val categoryId = _state.value.selectedCategory
         if (categoryId.isEmpty()) return
-        val difficulty = _state.value.difficulty
 
         viewModelScope.launch {
             try {
@@ -238,44 +244,95 @@ class BattleViewModel : ViewModel() {
         gameListenerJob = viewModelScope.launch {
             var lastRound = -1
             firestore.listenGame(gameId).collect { game ->
-                _state.value = _state.value.copy(game = game)
+                // PERBAIKAN DINAMIS: Menentukan target jumlah soal berdasarkan mode game
+                val adjustedGame = if (_state.value.isBotGame) {
+                    // Jika mode mengandung kata "marathon", set ke 10 soal. Jika tidak (casual), set ke 5 soal.
+                    val targetCount = if (game.mode.contains("marathon", ignoreCase = true) ||
+                        _state.value.selectedMode.contains("marathon", ignoreCase = true)) 10 else 5
 
-                when (game.status) {
+                    val limitedQuestions = game.questions.take(targetCount)
+                    game.copy(
+                        totalRounds = targetCount,
+                        questions = limitedQuestions
+                    )
+                } else {
+                    game
+                }
+
+                when (adjustedGame.status) {
                     "finished" -> {
                         timerJob?.cancel()
                         botAnswerJob?.cancel()
-                        _state.value = _state.value.copy(screen = BattleScreen.RESULT)
+                        _state.value = _state.value.copy(game = adjustedGame, screen = BattleScreen.RESULT)
                     }
                     "playing" -> {
                         if (_state.value.screen != BattleScreen.GAME) {
                             _state.value = _state.value.copy(screen = BattleScreen.GAME)
                         }
-                        if (game.currentRound != lastRound) {
-                            lastRound = game.currentRound
+
+                        if (adjustedGame.currentRound != lastRound) {
+                            lastRound = adjustedGame.currentRound
+                            botHasAnswered = false
                             _state.value = _state.value.copy(
+                                game = adjustedGame,
                                 selectedAnswer = -1,
                                 hasAnswered = false,
                                 eliminatedOptions = emptySet(),
-                                doublePointsActive = false
+                                doublePointsActive = false,
+                                isShowingCorrectAnswer = false
                             )
                             startRoundTimer()
                             if (_state.value.isBotGame) {
-                                botSubmitAnswer(game)
+                                botSubmitAnswer(adjustedGame)
                             }
+                        } else {
+                            _state.value = _state.value.copy(game = adjustedGame)
                         }
-                        if (game.currentRound == lastRound
-                            && game.players.size >= 2
-                            && (game.roundClaimedBy.isNotEmpty() || game.players.values.all { it.isReady })
-                        ) {
-                            timerJob?.cancel()
-                            botAnswerJob?.cancel()
-                            viewModelScope.launch {
-                                try {
-                                    firestore.advanceRound(game.gameId, game.currentRound, game.totalRounds)
-                                } catch (_: Exception) { }
-                            }
+
+                        if (adjustedGame.currentRound == lastRound) {
+                            checkAndAdvanceRound(adjustedGame)
                         }
                     }
+                }
+            }
+        }
+    }
+
+    private fun checkAndAdvanceRound(game: GameSession) {
+        if (advancingRound == game.currentRound) return
+
+        val myId = _state.value.myUserId
+        val me = game.players[myId]
+
+        // 1. Pastikan status kamu benar-benar sudah menjawab di UI atau di Server
+        val humanReady = _state.value.hasAnswered || me?.isReady == true
+
+        val botReady = if (_state.value.isBotGame) {
+            botHasAnswered || game.players["system_bot_ai"]?.isReady == true
+        } else {
+            game.players["system_bot_ai"]?.isReady == true
+        }
+
+        // 2. KUNCI UTAMA: Jika bermain VS Bot, soal HANYA BOLEH berganti jika KAMU sudah menjawab DAN BOT sudah menjawab.
+        // Bot tidak bisa lagi memaksa mengganti soal sendirian jika kamu belum menjawab.
+        val allReady = if (_state.value.isBotGame) {
+            humanReady && botReady
+        } else {
+            game.players.size >= 2 && game.players.values.all { it.isReady }
+        }
+
+        // 3. Tambahkan pengecekan ketat agar server tidak melompati ronde secara sepihak
+        if (allReady) {
+            advancingRound = game.currentRound
+            timerJob?.cancel()
+            botAnswerJob?.cancel()
+
+            viewModelScope.launch {
+                val maxRounds = if (_state.value.isBotGame) game.totalRounds else game.totalRounds
+                try {
+                    firestore.advanceRound(game.gameId, game.currentRound, maxRounds)
+                } catch (_: Exception) {
+                    if (advancingRound == game.currentRound) advancingRound = -1
                 }
             }
         }
@@ -288,13 +345,25 @@ class BattleViewModel : ViewModel() {
             var timeLeft = game.roundTimeLimit
 
             while (timeLeft > 0) {
-                _state.value = _state.value.copy(timeLeft = timeLeft)
-                delay(1000)
-                timeLeft--
+                // Jangan kurangi timer visual jika sedang membeku memperlihatkan jawaban benar
+                if (!_state.value.isShowingCorrectAnswer) {
+                    _state.value = _state.value.copy(timeLeft = timeLeft)
+                    delay(1000)
+                    timeLeft--
+                } else {
+                    delay(200)
+                }
             }
             _state.value = _state.value.copy(timeLeft = 0)
+
             if (!_state.value.hasAnswered) {
                 timeoutSubmit(game)
+            }
+
+            if (_state.value.isBotGame) {
+                botAnswerJob?.cancel()
+                botHasAnswered = true
+                checkAndAdvanceRound(_state.value.game)
             }
         }
     }
@@ -314,10 +383,12 @@ class BattleViewModel : ViewModel() {
     }
 
     fun selectAnswer(index: Int) {
+        if (_state.value.isShowingCorrectAnswer) return // Kunci tombol input saat jeda 2 detik
         _state.value = _state.value.copy(selectedAnswer = index)
     }
 
     fun submitAnswer(selectedAnswer: Int = _state.value.selectedAnswer) {
+        if (_state.value.isShowingCorrectAnswer) return // Cegah double-submit saat jeda ronde
         val game = _state.value.game
         val userId = FirebaseModule.getUserId() ?: return
         val round = game.currentRound
@@ -332,6 +403,9 @@ class BattleViewModel : ViewModel() {
                 firestore.submitAnswer(game.gameId, userId, selectedAnswer, isCorrect, game.mode)
             } catch (e: Exception) {
                 _state.value = _state.value.copy(errorMessage = "Gagal mengirim jawaban")
+            }
+            if (_state.value.isBotGame) {
+                checkAndAdvanceRound(_state.value.game)
             }
         }
     }
@@ -351,10 +425,14 @@ class BattleViewModel : ViewModel() {
             try {
                 firestore.submitAnswer(game.gameId, "system_bot_ai", answer, isCorrect, game.mode)
             } catch (_: Exception) { }
+
+            botHasAnswered = true
+            checkAndAdvanceRound(_state.value.game)
         }
     }
 
     fun usePowerUp(type: String) {
+        if (_state.value.isShowingCorrectAnswer) return
         val game = _state.value.game
         val userId = _state.value.myUserId
         viewModelScope.launch {
@@ -384,6 +462,8 @@ class BattleViewModel : ViewModel() {
         timerJob?.cancel()
         botAnswerJob?.cancel()
         roomListenerJob?.cancel()
+        advancingRound = -1
+        botHasAnswered = false
         _state.value = BattleUiState(
             myUserId = _state.value.myUserId,
             selectedMode = _state.value.selectedMode
@@ -396,6 +476,8 @@ class BattleViewModel : ViewModel() {
             firestore.leaveRoom(_state.value.roomCode, userId)
         }
         roomListenerJob?.cancel()
+        advancingRound = -1
+        botHasAnswered = false
         _state.value = BattleUiState(myUserId = _state.value.myUserId)
     }
 
