@@ -39,7 +39,8 @@ data class GameSession(
     val roundTimeLimit: Int = 20,
     val winnerId: String = "",
     val createdAt: Long = 0L,
-    val mode: String = "casual"
+    val mode: String = "casual",
+    val roundClaimedBy: String = ""
 )
 
 data class GameRoom(

@@ -213,6 +213,7 @@ class FirestoreService {
             "roundStartTime" to (System.currentTimeMillis() + 3000),
             "roundTimeLimit" to roundTimeLimit,
             "mode" to mode,
+            "roundClaimedBy" to "",
             "winnerId" to "",
             "createdAt" to System.currentTimeMillis()
         )
@@ -242,14 +243,26 @@ class FirestoreService {
             "marathon" -> 50L
             else -> 100L
         }
-        gameRef.update(
-            mapOf(
+        db.runTransaction { transaction ->
+            val snapshot = transaction.get(gameRef)
+            val game = snapshot.toObject<GameSession>() ?: return@runTransaction
+
+            val alreadyClaimed = game.roundClaimedBy.isNotEmpty()
+            val shouldAward = isCorrect && !alreadyClaimed
+
+            val updates = mutableMapOf<String, Any>(
                 "players.$playerId.totalAnswered" to FieldValue.increment(1L),
-                "players.$playerId.correctCount" to FieldValue.increment(if (isCorrect) 1L else 0L),
-                "players.$playerId.score" to FieldValue.increment(if (isCorrect) points else 0L),
                 "players.$playerId.isReady" to true
             )
-        ).await()
+            if (shouldAward) {
+                updates["players.$playerId.correctCount"] = FieldValue.increment(1L)
+                updates["players.$playerId.score"] = FieldValue.increment(points)
+            }
+            if (shouldAward) {
+                updates["roundClaimedBy"] = playerId
+            }
+            transaction.update(gameRef, updates)
+        }.await()
     }
 
     suspend fun advanceRound(gameId: String, currentRound: Int, totalRounds: Int) {
@@ -268,6 +281,7 @@ class FirestoreService {
                     "currentRound" to nextRound,
                     "roundStartTime" to (System.currentTimeMillis() + 2000)
                 )
+                updates["roundClaimedBy"] = ""
                 game.players.keys.forEach { uid ->
                     updates["players.$uid.isReady"] = false
                 }

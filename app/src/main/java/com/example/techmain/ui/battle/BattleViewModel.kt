@@ -265,7 +265,7 @@ class BattleViewModel : ViewModel() {
                         }
                         if (game.currentRound == lastRound
                             && game.players.size >= 2
-                            && game.players.values.all { it.isReady }
+                            && (game.roundClaimedBy.isNotEmpty() || game.players.values.all { it.isReady })
                         ) {
                             timerJob?.cancel()
                             botAnswerJob?.cancel()
@@ -348,7 +348,9 @@ class BattleViewModel : ViewModel() {
             val isCorrect = BotAnswerEngine.shouldBeCorrect(difficulty)
             val answer = BotAnswerEngine.getAnswer(question.correctAnswer, isCorrect, question.options.size)
 
-            firestore.submitAnswer(game.gameId, "system_bot_ai", answer, isCorrect)
+            try {
+                firestore.submitAnswer(game.gameId, "system_bot_ai", answer, isCorrect, game.mode)
+            } catch (_: Exception) { }
         }
     }
 
