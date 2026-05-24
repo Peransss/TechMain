@@ -140,7 +140,7 @@ class FirestoreService {
         awaitClose { listener.remove() }
     }
 
-    suspend fun startGameFromRoom(roomCode: String, mode: String = "casual"): String {
+    suspend fun startGameFromRoom(roomCode: String, mode: String = "casual", extraPlayers: Map<String, RoomPlayer> = emptyMap()): String {
         val roomRef = roomsCollection.document(roomCode)
         val snapshot = roomRef.get().await()
         val room = snapshot.toObject<GameRoom>() ?: return ""
@@ -177,8 +177,9 @@ class FirestoreService {
 
         val gameRef = gamesCollection.document()
 
+        val allPlayers = room.players + extraPlayers
         val players = mutableMapOf<String, Map<String, Any>>()
-        room.players.forEach { (uid, player) ->
+        allPlayers.forEach { (uid, player) ->
             players[uid] = mapOf(
                 "userId" to uid,
                 "displayName" to player.displayName,

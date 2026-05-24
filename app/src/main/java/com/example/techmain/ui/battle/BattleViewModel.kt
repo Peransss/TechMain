@@ -7,6 +7,7 @@ import com.example.techmain.firebase.CustomQuiz
 import com.example.techmain.firebase.FirestoreService
 import com.example.techmain.firebase.GameRoom
 import com.example.techmain.firebase.GameSession
+import com.example.techmain.firebase.RoomPlayer
 import com.example.techmain.game.BotAnswerEngine
 import com.example.techmain.game.BotDifficulty
 import kotlinx.coroutines.Job
@@ -100,7 +101,6 @@ class BattleViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val roomCode = firestore.createRoom(userId, "Pemain", categoryId)
-                firestore.joinRoom(roomCode, "system_bot_ai", "Bot AI")
 
                 _state.value = _state.value.copy(
                     isBotGame = true,
@@ -109,7 +109,11 @@ class BattleViewModel : ViewModel() {
                 )
 
                 listenRoom(roomCode)
-                firestore.startGameFromRoom(roomCode, _state.value.selectedMode)
+                firestore.startGameFromRoom(
+                    roomCode,
+                    _state.value.selectedMode,
+                    extraPlayers = mapOf("system_bot_ai" to RoomPlayer("system_bot_ai", "Bot AI"))
+                )
             } catch (e: Exception) {
                 _state.value = _state.value.copy(errorMessage = "Gagal memulai vs bot")
             }
