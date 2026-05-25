@@ -13,3 +13,8 @@ val NeonSlateError = Color(0xFFFB7185)
 val NeonSlateGold = Color(0xFFFBBF24)
 val NeonSlateTextPrimary = Color(0xFFF1F5F9)
 val NeonSlateTextSecondary = Color(0xFF94A3B8)
+
+// Glassmorphism tokens
+val GlassWhite = Color(0x1AFFFFFF) // 10% Alpha
+val GlassWhiteHigh = Color(0x33FFFFFF) // 20% Alpha
+val NeonGlowPrimary = NeonSlatePrimary.copy(alpha = 0.3f)
