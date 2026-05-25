@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.techmain.firebase.CustomQuestion
+import com.example.techmain.ui.components.AnswerButton
 import com.example.techmain.ui.components.GlassCard
 import com.example.techmain.ui.components.NeonButton
 import com.example.techmain.ui.theme.NeonSlateGold
@@ -34,6 +35,26 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
     val opponent = game.players.filterKeys { it != myId }.values.firstOrNull()
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            NeonButton(
+                onClick = {
+                    if (game.mode == "solo") {
+                        // Assuming viewModel has a method or handle for this, or using leaveRoom
+                        viewModel.leaveRoom()
+                    } else viewModel.leaveRoom()
+                },
+                isPrimary = false,
+                isOutlined = true
+            ) {
+                Text("Exit")
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -117,28 +138,15 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
                 val isCorrectAnswer = currentQuestion.correctAnswer == index && state.hasAnswered
                 val isWrongSelection = isSelected && currentQuestion.correctAnswer != index
 
-                val bgColor by animateColorAsState(
-                    targetValue = when {
-                        state.hasAnswered && isCorrectAnswer -> Color(0xFF4CAF50)
-                        state.hasAnswered && isWrongSelection -> Color(0xFFE53935)
-                        isSelected -> MaterialTheme.colorScheme.primaryContainer
-                        else -> MaterialTheme.colorScheme.surfaceVariant
-                    },
-                    label = "optionBg"
-                )
-
-                NeonButton(
+                AnswerButton(
+                    text = if (isEliminated) "" else "${('A' + index)}. $option",
                     onClick = { viewModel.selectAnswer(index) },
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    enabled = !state.hasAnswered && !isEliminated
-                ) {
-                    Text(
-                        text = if (isEliminated) "" else "${('A' + index)}. $option",
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Start,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                    )
-                }
+                    enabled = !state.hasAnswered && !isEliminated,
+                    isSelected = isSelected,
+                    isCorrect = isCorrectAnswer,
+                    isWrong = isWrongSelection
+                )
             }
 
             if (game.mode == "powerup" && !state.hasAnswered) {
