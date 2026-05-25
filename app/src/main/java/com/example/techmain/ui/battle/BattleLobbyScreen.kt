@@ -319,22 +319,30 @@ fun JoinRoomContent(viewModel: BattleViewModel) {
 fun DifficultyDialog(viewModel: BattleViewModel) {
     val state by viewModel.state.collectAsState()
 
-    AlertDialog(
-        onDismissRequest = { viewModel.hideDifficultyDialog() },
-        title = {
-            Text("Pilih Kesulitan Bot", fontWeight = FontWeight.Bold)
-        },
-        text = {
+    androidx.compose.ui.window.Dialog(onDismissRequest = { viewModel.hideDifficultyDialog() }) {
+        GlassCard(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            border = BorderStroke(1.dp, NeonSlatePrimary.copy(alpha = 0.5f))
+        ) {
+            Text(
+                "Pilih Kesulitan Bot",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            Spacer(modifier = Modifier.height(16.dp))
             Column {
                 BotDifficulty.entries.forEach { difficulty ->
                     val isSelected = state.difficulty == difficulty
-                    TextButton(
+                    GlassCard(
                         onClick = {
                             viewModel.setDifficulty(difficulty)
                             viewModel.hideDifficultyDialog()
                             viewModel.startVsBot()
                         },
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        containerColor = if (isSelected) NeonSlatePrimary.copy(alpha = 0.2f) else GlassWhiteHigh.copy(alpha = 0.1f),
+                        border = BorderStroke(1.dp, if (isSelected) NeonSlatePrimary else Color.Transparent)
                     ) {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text(
@@ -344,7 +352,8 @@ fun DifficultyDialog(viewModel: BattleViewModel) {
                                     BotDifficulty.HARD -> "\uD83D\uDD25 Hard"
                                 },
                                 fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.titleMedium
+                                style = MaterialTheme.typography.titleMedium,
+                                color = if (isSelected) NeonSlatePrimary else Color.White
                             )
                             Text(
                                 when (difficulty) {
@@ -352,19 +361,24 @@ fun DifficultyDialog(viewModel: BattleViewModel) {
                                     BotDifficulty.MEDIUM -> "Bot menjawab cukup baik (~50% benar)"
                                     BotDifficulty.HARD -> "Bot sangat pintar (~80% benar)"
                                 },
-                                style = MaterialTheme.typography.bodySmall
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.7f)
                             )
                         }
                     }
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = { viewModel.hideDifficultyDialog() }) {
-                Text("BATAL")
+            Spacer(modifier = Modifier.height(24.dp))
+            NeonButton(
+                onClick = { viewModel.hideDifficultyDialog() },
+                modifier = Modifier.fillMaxWidth(),
+                isPrimary = false,
+                isOutlined = true
+            ) {
+                Text("BATAL", fontWeight = FontWeight.Bold)
             }
         }
-    )
+    }
 }
 
 @Composable
