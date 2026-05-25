@@ -12,10 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,10 +20,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.example.techmain.ui.components.GlassCard
+import com.example.techmain.ui.components.NeonButton
 import com.example.techmain.ui.theme.NeonSlateGold
 
 @Composable
@@ -44,10 +44,17 @@ fun BattleResultScreen(viewModel: BattleViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // Winner badge with glow effect
         Icon(
             imageVector = Icons.Default.EmojiEvents,
             contentDescription = null,
-            modifier = Modifier.size(96.dp),
+            modifier = Modifier.size(96.dp).graphicsLayer {
+                if (isWinner) {
+                    shadowElevation = 20f
+                    shape = androidx.compose.foundation.shape.CircleShape
+                    clip = true
+                }
+            },
             tint = if (isWinner) NeonSlateGold else MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -60,17 +67,22 @@ fun BattleResultScreen(viewModel: BattleViewModel) {
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+        // Result container as GlassCard
+        GlassCard(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            StatCard("Skor Kamu", "${me?.score ?: 0}", "${me?.correctCount ?: 0}/${me?.totalAnswered ?: 0}")
-            StatCard("Lawan", "${opponent?.score ?: 0}", "${opponent?.correctCount ?: 0}/${opponent?.totalAnswered ?: 0}")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                StatCard("Skor Kamu", "${me?.score ?: 0}", "${me?.correctCount ?: 0}/${me?.totalAnswered ?: 0}")
+                StatCard("Lawan", "${opponent?.score ?: 0}", "${opponent?.correctCount ?: 0}/${opponent?.totalAnswered ?: 0}")
+            }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Button(
+        NeonButton(
             onClick = { viewModel.playAgain() },
             modifier = Modifier.fillMaxWidth().height(48.dp)
         ) {
@@ -81,18 +93,12 @@ fun BattleResultScreen(viewModel: BattleViewModel) {
 
 @Composable
 fun StatCard(title: String, score: String, accuracy: String) {
-    Card(
-        modifier = Modifier.width(150.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(title, style = MaterialTheme.typography.labelSmall)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(score, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Text("Benar: $accuracy", style = MaterialTheme.typography.bodySmall)
-        }
+        Text(title, style = MaterialTheme.typography.labelSmall)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(score, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Text("Benar: $accuracy", style = MaterialTheme.typography.bodySmall)
     }
 }
