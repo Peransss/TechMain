@@ -241,10 +241,18 @@ fun LobbyContent(viewModel: BattleViewModel) {
 @Composable
 fun ModePickerDialog(viewModel: BattleViewModel) {
     val state by viewModel.state.collectAsState()
-    AlertDialog(
-        onDismissRequest = { viewModel.hideModePicker() },
-        title = { Text("Pilih Mode", fontWeight = FontWeight.Bold) },
-        text = {
+    androidx.compose.ui.window.Dialog(onDismissRequest = { viewModel.hideModePicker() }) {
+        GlassCard(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            border = BorderStroke(1.dp, NeonSlateSecondary.copy(alpha = 0.5f))
+        ) {
+            Text(
+                "Pilih Mode",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            Spacer(modifier = Modifier.height(16.dp))
             Column {
                 val modes = listOf(
                     Triple("casual", "Casual", "Standar 5 soal \u00B7 20 detik"),
@@ -254,25 +262,39 @@ fun ModePickerDialog(viewModel: BattleViewModel) {
                 )
                 modes.forEach { (modeId, title, desc) ->
                     val isSelected = state.selectedMode == modeId
-                    TextButton(
+                    GlassCard(
                         onClick = { viewModel.setMode(modeId) },
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        containerColor = if (isSelected) NeonSlateSecondary.copy(alpha = 0.2f) else GlassWhiteHigh.copy(alpha = 0.1f),
+                        border = BorderStroke(1.dp, if (isSelected) NeonSlateSecondary else Color.Transparent)
                     ) {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text(
                                 title,
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.titleMedium,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                color = if (isSelected) NeonSlateSecondary else Color.White
                             )
-                            Text(desc, style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                desc,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
                         }
                     }
                 }
             }
-        },
-        confirmButton = { TextButton(onClick = { viewModel.hideModePicker() }) { Text("BATAL") } }
-    )
+            Spacer(modifier = Modifier.height(24.dp))
+            NeonButton(
+                onClick = { viewModel.hideModePicker() },
+                modifier = Modifier.fillMaxWidth(),
+                isPrimary = false,
+                isOutlined = true
+            ) {
+                Text("BATAL", fontWeight = FontWeight.Bold)
+            }
+        }
+    }
 }
 
 @Composable
