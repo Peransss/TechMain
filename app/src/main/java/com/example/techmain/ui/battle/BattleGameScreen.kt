@@ -19,6 +19,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.techmain.firebase.CustomQuestion
+import com.example.techmain.ui.components.GlassCard
+import com.example.techmain.ui.components.NeonButton
 import com.example.techmain.ui.theme.NeonSlateGold
 import com.example.techmain.ui.theme.NeonSlatePrimary
 
@@ -80,38 +82,40 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
         Spacer(modifier = Modifier.height(16.dp))
 
         if (currentQuestion != null) {
-            Text(
-                text = game.mode.replaceFirstChar { it.uppercase() },
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-
-            val imageUrl = currentQuestion.imageUrl
-            if (!imageUrl.isNullOrEmpty()) {
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxWidth().height(200.dp).border(2.dp, NeonSlatePrimary)
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = game.mode.replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+                Spacer(modifier = Modifier.height(4.dp))
 
-            Text(
-                text = currentQuestion.question,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
+                val imageUrl = currentQuestion.imageUrl
+                if (!imageUrl.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxWidth().height(200.dp).border(2.dp, NeonSlatePrimary)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                Text(
+                    text = currentQuestion.question,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
 
             currentQuestion.options.forEachIndexed { index, option ->
                 val isEliminated = state.eliminatedOptions.contains(index)
                 val isSelected = state.selectedAnswer == index
                 val isCorrectAnswer = currentQuestion.correctAnswer == index && state.hasAnswered
-                val isWrongSelection = isSelected && !(currentQuestion.correctAnswer == index)
+                val isWrongSelection = isSelected && currentQuestion.correctAnswer != index
 
                 val bgColor by animateColorAsState(
                     targetValue = when {
@@ -123,11 +127,9 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
                     label = "optionBg"
                 )
 
-                Button(
+                NeonButton(
                     onClick = { viewModel.selectAnswer(index) },
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = if (isEliminated) Color.DarkGray else bgColor),
                     enabled = !state.hasAnswered && !isEliminated
                 ) {
                     Text(
