@@ -302,37 +302,50 @@ fun JoinRoomContent(viewModel: BattleViewModel) {
     val state by viewModel.state.collectAsState()
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
+        modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Gabung Room", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(24.dp))
-        OutlinedTextField(
-            value = state.joinCode,
-            onValueChange = { viewModel.onJoinCodeChange(it) },
-            label = { Text("Kode Room") },
-            singleLine = true,
+        GlassCard(
             modifier = Modifier.fillMaxWidth(),
-            textStyle = MaterialTheme.typography.headlineMedium.copy(textAlign = TextAlign.Center),
-            shape = RoundedCornerShape(12.dp)
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(
-            onClick = { viewModel.joinRoom() },
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            enabled = state.joinCode.length == 6,
-            shape = RoundedCornerShape(12.dp)
+            border = BorderStroke(1.dp, NeonSlatePrimary.copy(alpha = 0.3f))
         ) {
-            Text("GABUNG", fontWeight = FontWeight.Bold)
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        FilledTonalButton(
-            onClick = { viewModel.playAgain() },
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Text("KEMBALI")
+            Text(
+                "Gabung Room",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            OutlinedTextField(
+                value = state.joinCode,
+                onValueChange = { viewModel.onJoinCodeChange(it) },
+                label = { Text("Kode Room") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = MaterialTheme.typography.headlineMedium.copy(textAlign = TextAlign.Center, color = Color.White),
+                shape = RoundedCornerShape(12.dp)
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            NeonButton(
+                onClick = { viewModel.joinRoom() },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                enabled = state.joinCode.length == 6,
+                isPrimary = true
+            ) {
+                Text("GABUNG", fontWeight = FontWeight.Bold)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            NeonButton(
+                onClick = { viewModel.playAgain() },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                isPrimary = false,
+                isOutlined = true
+            ) {
+                Text("KEMBALI")
+            }
         }
     }
 }
