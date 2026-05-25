@@ -35,9 +35,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.graphics.Color
 import com.example.techmain.firebase.CustomQuiz
+import com.example.techmain.ui.components.GlassCard
+import com.example.techmain.ui.components.NeonButton
 import com.example.techmain.ui.theme.NeonSlateBackground
 import com.example.techmain.ui.theme.NeonSlateSurfaceBorder
 import com.example.techmain.ui.theme.NeonSlatePrimary
+import com.example.techmain.ui.theme.NeonSlateSecondary
+import com.example.techmain.ui.theme.GlassWhiteHigh
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -89,19 +93,14 @@ fun LobbyContent(viewModel: BattleViewModel) {
             ) {
                 items(featuredQuizzes) { quiz ->
                     val isSelected = state.selectedCategory == quiz.id
-                    Card(
+                    GlassCard(
                         onClick = { viewModel.selectCategory(quiz.id) },
                         modifier = Modifier.size(width = 200.dp, height = 120.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(2.dp, if (isSelected) Color.White else NeonSlatePrimary),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected) NeonSlatePrimary.copy(alpha = 0.2f) else NeonSlateBackground
-                        )
+                        border = BorderStroke(2.dp, if (isSelected) Color.White else NeonSlatePrimary.copy(alpha = 0.5f)),
+                        containerColor = if (isSelected) NeonSlatePrimary.copy(alpha = 0.2f) else GlassWhiteHigh.copy(alpha = 0.1f)
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(quiz.title, color = Color.White, fontWeight = FontWeight.Bold)
-                            Text("${quiz.questions.size} Questions", color = NeonSlatePrimary, style = MaterialTheme.typography.bodySmall)
-                        }
+                        Text(quiz.title, color = Color.White, fontWeight = FontWeight.Bold)
+                        Text("${quiz.questions.size} Questions", color = NeonSlatePrimary, style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
@@ -120,18 +119,14 @@ fun LobbyContent(viewModel: BattleViewModel) {
         ) {
             items(categories) { category ->
                 val isSelected = state.selectedCategory == category.id
-                Card(
+                GlassCard(
                     onClick = { viewModel.selectCategory(category.id) },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    border = if (isSelected) androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                        else MaterialTheme.colorScheme.surfaceVariant
-                    )
+                    border = BorderStroke(2.dp, if (isSelected) NeonSlatePrimary else Color.Transparent),
+                    containerColor = if (isSelected) NeonSlatePrimary.copy(alpha = 0.1f) else GlassWhiteHigh.copy(alpha = 0.05f)
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
@@ -146,7 +141,13 @@ fun LobbyContent(viewModel: BattleViewModel) {
                             style = MaterialTheme.typography.headlineLarge
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(category.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                        Text(
+                            category.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            color = if (isSelected) NeonSlatePrimary else Color.White
+                        )
                     }
                 }
             }
@@ -154,42 +155,41 @@ fun LobbyContent(viewModel: BattleViewModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
+        NeonButton(
             onClick = { viewModel.createRoom() },
             modifier = Modifier.fillMaxWidth().height(52.dp),
             enabled = state.selectedCategory.isNotEmpty(),
-            shape = RoundedCornerShape(12.dp)
+            isPrimary = true
         ) {
             Icon(Icons.Default.Add, contentDescription = null)
             Spacer(modifier = Modifier.size(8.dp))
             Text("BUAT ROOM (Multiplayer)", fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Button(
+        NeonButton(
             onClick = { viewModel.showDifficultyDialog() },
             modifier = Modifier.fillMaxWidth().height(52.dp),
             enabled = state.selectedCategory.isNotEmpty(),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondary
-            )
+            isPrimary = false
         ) {
             Text("\uD83E\uDD16 VS BOT", fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(8.dp))
-        OutlinedButton(
+        NeonButton(
             onClick = { viewModel.showSoloSetup() },
             modifier = Modifier.fillMaxWidth().height(52.dp),
             enabled = state.selectedCategory.isNotEmpty(),
-            shape = RoundedCornerShape(12.dp)
+            isPrimary = false,
+            isOutlined = true
         ) {
             Text("\uD83C\uDFAF LATIHAN (Solo)", fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(8.dp))
-        FilledTonalButton(
+        NeonButton(
             onClick = { viewModel.showJoinRoom() },
             modifier = Modifier.fillMaxWidth().height(52.dp),
-            shape = RoundedCornerShape(12.dp)
+            isPrimary = true,
+            isOutlined = true
         ) {
             Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null)
             Spacer(modifier = Modifier.size(8.dp))
