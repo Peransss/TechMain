@@ -34,7 +34,7 @@ TechMain is an Android-based multiplayer educational quiz game inspired by "ZEP 
 ### UI & Navigation
 *   **Navigation:** Uses `Navigation Compose`. The main flow is defined in `MainActivity.kt` and `NavGraph.kt`.
 *   **Battle Screens:** Managed internally within `BattleMainScreen.kt` using a custom state-driven routing (`LOBBY`, `WAITING_ROOM`, `GAME`, `RESULT`).
-*   **Theming:** Material3 with dynamic color support (where applicable).
+*   **Theming:** Soft Neon Glassmorphism (custom dark-only theme using `NeonSlate` palette) with consistent glassmorphism effects (GlassCard, AnswerButton).
 
 ## Development Conventions
 
@@ -43,6 +43,7 @@ TechMain is an Android-based multiplayer educational quiz game inspired by "ZEP 
 *   **Hardcoded Strings:** Currently, most UI strings are hardcoded in Indonesian. New features should ideally use `strings.xml`.
 *   **Icons:** Use `Icons.AutoMirrored` for directional icons (e.g., `ArrowBack`) to follow current Material standards.
 *   **Bot IDs:** Internal system entities like the AI bot should use the prefix `system_bot_` to avoid collisions with user UIDs.
+*   **UI Components:** Use shared `GlassCard` and `NeonButton`/`AnswerButton` for all game screens to maintain consistent Soft Neon styling.
 
 ## Key Modules
 
