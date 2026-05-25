@@ -241,18 +241,11 @@ fun LobbyContent(viewModel: BattleViewModel) {
 @Composable
 fun ModePickerDialog(viewModel: BattleViewModel) {
     val state by viewModel.state.collectAsState()
-    androidx.compose.ui.window.Dialog(onDismissRequest = { viewModel.hideModePicker() }) {
-        GlassCard(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            border = BorderStroke(1.dp, NeonSlateSecondary.copy(alpha = 0.5f))
-        ) {
-            Text(
-                "Pilih Mode",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+
+    AlertDialog(
+        onDismissRequest = { viewModel.hideModePicker() },
+        title = { Text("Pilih Mode", fontWeight = FontWeight.Bold) },
+        text = {
             Column {
                 val modes = listOf(
                     Triple("casual", "Casual", "Standar 5 soal \u00B7 20 detik"),
@@ -262,39 +255,35 @@ fun ModePickerDialog(viewModel: BattleViewModel) {
                 )
                 modes.forEach { (modeId, title, desc) ->
                     val isSelected = state.selectedMode == modeId
-                    GlassCard(
+                    TextButton(
                         onClick = { viewModel.setMode(modeId) },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        containerColor = if (isSelected) NeonSlateSecondary.copy(alpha = 0.2f) else GlassWhiteHigh.copy(alpha = 0.1f),
-                        border = BorderStroke(1.dp, if (isSelected) NeonSlateSecondary else Color.Transparent)
+                        shape = RoundedCornerShape(8.dp),
+                        border = if (isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null
                     ) {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text(
                                 title,
                                 fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = if (isSelected) NeonSlateSecondary else Color.White
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 desc,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.7f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(24.dp))
-            NeonButton(
-                onClick = { viewModel.hideModePicker() },
-                modifier = Modifier.fillMaxWidth(),
-                isPrimary = false,
-                isOutlined = true
-            ) {
-                Text("BATAL", fontWeight = FontWeight.Bold)
+        },
+        confirmButton = {
+            Button(onClick = { viewModel.hideModePicker() }) {
+                Text("OK", fontWeight = FontWeight.Bold)
             }
-        }
-    }
+        },
+        dismissButton = { TextButton(onClick = { viewModel.hideModePicker() }) { Text("BATAL") } }
+    )
 }
 
 @Composable
@@ -354,30 +343,22 @@ fun JoinRoomContent(viewModel: BattleViewModel) {
 fun DifficultyDialog(viewModel: BattleViewModel) {
     val state by viewModel.state.collectAsState()
 
-    androidx.compose.ui.window.Dialog(onDismissRequest = { viewModel.hideDifficultyDialog() }) {
-        GlassCard(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            border = BorderStroke(1.dp, NeonSlatePrimary.copy(alpha = 0.5f))
-        ) {
-            Text(
-                "Pilih Kesulitan Bot",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+    AlertDialog(
+        onDismissRequest = { viewModel.hideDifficultyDialog() },
+        title = { Text("Pilih Kesulitan Bot", fontWeight = FontWeight.Bold) },
+        text = {
             Column {
                 BotDifficulty.entries.forEach { difficulty ->
                     val isSelected = state.difficulty == difficulty
-                    GlassCard(
+                    TextButton(
                         onClick = {
                             viewModel.setDifficulty(difficulty)
                             viewModel.hideDifficultyDialog()
                             viewModel.startVsBot()
                         },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        containerColor = if (isSelected) NeonSlatePrimary.copy(alpha = 0.2f) else GlassWhiteHigh.copy(alpha = 0.1f),
-                        border = BorderStroke(1.dp, if (isSelected) NeonSlatePrimary else Color.Transparent)
+                        shape = RoundedCornerShape(8.dp),
+                        border = if (isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null
                     ) {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text(
@@ -387,8 +368,7 @@ fun DifficultyDialog(viewModel: BattleViewModel) {
                                     BotDifficulty.HARD -> "\uD83D\uDD25 Hard"
                                 },
                                 fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = if (isSelected) NeonSlatePrimary else Color.White
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 when (difficulty) {
@@ -397,23 +377,16 @@ fun DifficultyDialog(viewModel: BattleViewModel) {
                                     BotDifficulty.HARD -> "Bot sangat pintar (~80% benar)"
                                 },
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.7f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(24.dp))
-            NeonButton(
-                onClick = { viewModel.hideDifficultyDialog() },
-                modifier = Modifier.fillMaxWidth(),
-                isPrimary = false,
-                isOutlined = true
-            ) {
-                Text("BATAL", fontWeight = FontWeight.Bold)
-            }
-        }
-    }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = { viewModel.hideDifficultyDialog() }) { Text("BATAL") } }
+    )
 }
 
 @Composable
