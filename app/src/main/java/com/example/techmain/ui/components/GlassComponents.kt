@@ -11,6 +11,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -122,4 +124,35 @@ fun NeonButton(
         border = border,
         content = content
     )
+}
+
+@Composable
+fun AnswerButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    isSelected: Boolean = false,
+    isCorrect: Boolean = false,
+    isWrong: Boolean = false
+) {
+    val containerColor = when {
+        isCorrect -> Color(0xFF4CAF50)
+        isWrong -> Color(0xFFE53935)
+        isSelected -> NeonSlatePrimary
+        else -> NeonSlateSurfaceBorder
+    }
+
+    NeonButton(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        isPrimary = isSelected
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Start
+        )
+    }
 }
