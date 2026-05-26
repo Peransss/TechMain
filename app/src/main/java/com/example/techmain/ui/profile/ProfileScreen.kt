@@ -11,11 +11,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import com.example.techmain.ui.components.GlassCard
+import com.example.techmain.ui.theme.CyberPrimary
+import com.example.techmain.ui.theme.CyberSecondary
+import com.example.techmain.ui.theme.CyberAccent
+import com.example.techmain.ui.theme.CyberBackground
+import com.example.techmain.ui.theme.CyberSurfaceBorder
+import com.example.techmain.ui.theme.CyberTextPrimary
+import com.example.techmain.ui.theme.CyberTextSecondary
+import com.example.techmain.ui.theme.CyberGold
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,7 +51,8 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
 
             Box(
                 modifier = Modifier.size(120.dp).clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .background(CyberPrimary.copy(alpha = 0.15f))
+                    .border(2.dp, CyberPrimary, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Text(text = state.avatarEmoji, fontSize = 56.sp)
@@ -54,13 +63,12 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Card(
+            GlassCard(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                shape = RoundedCornerShape(16.dp)
+                containerColor = CyberPrimary.copy(alpha = 0.15f),
+                border = BorderStroke(1.dp, CyberPrimary.copy(alpha = 0.3f))
             ) {
-                Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
-                    Text("Ringkasan", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("Ringkasan", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(16.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                         StatBox("Rating", "${state.rating}")
@@ -68,25 +76,22 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                         StatBox("Menang", "${state.wins}")
                         StatBox("Kalah", "${state.losses}")
                     }
-                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Card(
+            GlassCard(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                shape = RoundedCornerShape(16.dp)
+                border = BorderStroke(1.dp, CyberSurfaceBorder)
             ) {
-                Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
-                    Text("Akurasi", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("Akurasi", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(12.dp))
                     val accuracy = if (state.totalAnswers > 0) (state.correctAnswers * 100 / state.totalAnswers) else 0
                     Text(
                         text = "$accuracy%",
                         style = MaterialTheme.typography.displayMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = CyberPrimary,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center
                     )
@@ -96,18 +101,16 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center
                     )
-                }
             }
 
             if (state.bestScores.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
-                Card(
+                GlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
-                    shape = RoundedCornerShape(16.dp)
+                    containerColor = CyberSecondary.copy(alpha = 0.15f),
+                    border = BorderStroke(1.dp, CyberSecondary.copy(alpha = 0.3f))
                 ) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
-                        Text("Category Mastery", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("Category Mastery", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(12.dp))
                         state.bestScores.forEach { (categoryId, score) ->
                             val tier = when {
@@ -122,12 +125,11 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
                             ) {
                                 Text(categoryId.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.bodyMedium)
                                 Text("$tier $score", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                            }
                         }
-                    }
                 }
             }
         }
+    }
     }
 }
 
