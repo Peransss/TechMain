@@ -21,34 +21,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.techmain.ui.theme.NeonSlateBackground
-import com.example.techmain.ui.theme.NeonSlateSurfaceBorder
-import com.example.techmain.ui.theme.NeonSlatePrimary
+import com.example.techmain.ui.theme.CyberBackground
+import com.example.techmain.ui.theme.CyberSurfaceBorder
+import com.example.techmain.ui.theme.CyberPrimary
+import com.example.techmain.ui.theme.CyberAccent
+import com.example.techmain.ui.theme.CyberTextPrimary
+import com.example.techmain.ui.theme.CyberGold
+import com.example.techmain.ui.components.GlassCard
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.text.font.FontWeight
 
 @Composable
 fun StudioScreen(viewModel: CreatorViewModel = viewModel(), onNavigateToWizard: () -> Unit) {
     val state by viewModel.state.collectAsState()
     Scaffold(
-        containerColor = NeonSlateBackground,
+        containerColor = CyberBackground,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onNavigateToWizard,
-                containerColor = NeonSlatePrimary
+                containerColor = CyberAccent
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Tambah Kuis", tint = Color.Black)
+                Icon(Icons.Default.Add, contentDescription = "Tambah Kuis", tint = Color.White)
             }
         }
     ) { padding ->
         LazyColumn(modifier = Modifier.padding(padding).fillMaxSize()) {
             items(state.myQuizzes) { quiz ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                        .border(1.dp, NeonSlateSurfaceBorder, MaterialTheme.shapes.medium)
-                        .padding(16.dp)
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth().padding(8.dp),
+                    border = BorderStroke(1.dp, CyberSurfaceBorder)
                 ) {
-                    Text(text = quiz.title, color = Color.White)
+                    Text(text = quiz.title, color = CyberTextPrimary, fontWeight = FontWeight.Bold)
                 }
             }
         }
