@@ -1,15 +1,20 @@
 package com.example.techmain.ui.battle
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.border
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,12 +22,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import coil3.compose.AsyncImage
 import com.example.techmain.firebase.CustomQuestion
 import com.example.techmain.ui.components.AnswerButton
 import com.example.techmain.ui.components.GlassCard
 import com.example.techmain.ui.components.NeonButton
-import com.example.techmain.ui.theme.NeonSlateGold
+import com.example.techmain.ui.theme.CyberAccent
+import com.example.techmain.ui.theme.CyberBackground
+import com.example.techmain.ui.theme.CyberGold
+import com.example.techmain.ui.theme.CyberPrimary
+import com.example.techmain.ui.theme.CyberSecondary
+import com.example.techmain.ui.theme.CyberSurfaceBorder
+import com.example.techmain.ui.theme.CyberTextPrimary
+import com.example.techmain.ui.theme.CyberTextSecondary
 import com.example.techmain.ui.theme.NeonSlatePrimary
 
 @Composable
@@ -33,6 +46,9 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
     val me = game.players[myId]
     val currentQuestion = game.questions.getOrNull(game.currentRound)
     val opponent = game.players.filterKeys { it != myId }.values.firstOrNull()
+    var showExitDialog by remember { mutableStateOf(false) }
+
+    BackHandler { showExitDialog = true }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Row(
@@ -41,12 +57,7 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             NeonButton(
-                onClick = {
-                    if (game.mode == "solo") {
-                        // Assuming viewModel has a method or handle for this, or using leaveRoom
-                        viewModel.leaveRoom()
-                    } else viewModel.leaveRoom()
-                },
+                onClick = { showExitDialog = true },
                 isPrimary = false,
                 isOutlined = true
             ) {
@@ -82,7 +93,7 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
 
         val timerProgress = state.timeLeft.toFloat() / game.roundTimeLimit.toFloat()
         val timerColor by animateColorAsState(
-            targetValue = if (state.timeLeft > 5) MaterialTheme.colorScheme.primary else Color.Red,
+            targetValue = if (state.timeLeft > 5) CyberPrimary else CyberAccent,
             label = "timerColor"
         )
         LinearProgressIndicator(
@@ -117,7 +128,7 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
                     AsyncImage(
                         model = imageUrl,
                         contentDescription = null,
-                        modifier = Modifier.fillMaxWidth().height(200.dp).border(2.dp, NeonSlatePrimary)
+                        modifier = Modifier.fillMaxWidth().height(200.dp).border(2.dp, CyberPrimary)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                 }
@@ -161,7 +172,7 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
             if (state.doublePointsActive) {
                 Text(
                     "Double Points Aktif!",
-                    color = NeonSlateGold,
+                    color = CyberGold,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
@@ -171,14 +182,15 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
             Spacer(modifier = Modifier.height(16.dp))
 
             if (!state.hasAnswered) {
-                Button(
+                NeonButton(
                     onClick = { viewModel.submitAnswer() },
                     modifier = Modifier.fillMaxWidth().height(48.dp),
-                    enabled = state.selectedAnswer >= 0
+                    enabled = state.selectedAnswer >= 0,
+                    isPrimary = true
                 ) {
                     Text("KONFIRMASI", fontWeight = FontWeight.Bold)
                 }
-            } else {
+    } else {
                 Text(
                     text = "Menunggu lawan...",
                     style = MaterialTheme.typography.bodyLarge,
@@ -190,17 +202,35 @@ fun BattleGameScreen(viewModel: BattleViewModel) {
             }
         }
     }
+
+    if (showExitDialog) {
+        Dialog(onDismissRequest = { showExitDialog = false }) {
+            GlassCard(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                border = BorderStroke(1.dp, CyberAccent.copy(alpha = 0.5f))
+            ) {
+                Text("Keluar Game?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Apakah kamu yakin ingin keluar?", color = Color.White.copy(alpha = 0.7f))
+                Spacer(modifier = Modifier.height(24.dp))
+                NeonButton(onClick = { showExitDialog = false; viewModel.leaveRoom() }, modifier = Modifier.fillMaxWidth().height(48.dp), isPrimary = true) {
+                    Text("YA, KELUAR", fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                NeonButton(onClick = { showExitDialog = false }, modifier = Modifier.fillMaxWidth().height(48.dp), isPrimary = false, isOutlined = true) {
+                    Text("BATAL", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
 }
 
 @Composable
 fun PlayerScoreCard(modifier: Modifier = Modifier, name: String, score: Int, isMe: Boolean) {
-    Card(
+    GlassCard(
         modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = if (isMe)
-                MaterialTheme.colorScheme.primaryContainer
-            else MaterialTheme.colorScheme.surfaceVariant
-        )
+        containerColor = if (isMe) CyberPrimary.copy(alpha = 0.2f) else CyberBackground,
+        border = BorderStroke(1.dp, if (isMe) CyberPrimary else CyberSurfaceBorder)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -208,7 +238,7 @@ fun PlayerScoreCard(modifier: Modifier = Modifier, name: String, score: Int, isM
         ) {
             Box(
                 modifier = Modifier.size(32.dp).clip(CircleShape)
-                    .background(if (isMe) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary),
+                    .background(if (isMe) CyberPrimary else CyberSecondary),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -231,8 +261,8 @@ fun PowerUpButton(label: String, onClick: () -> Unit, isAvailable: Boolean) {
         enabled = isAvailable,
         shape = RoundedCornerShape(8.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.secondary,
-            contentColor = MaterialTheme.colorScheme.onSecondary
+            containerColor = CyberSecondary,
+            contentColor = Color.White
         )
     ) {
         Text(label, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
