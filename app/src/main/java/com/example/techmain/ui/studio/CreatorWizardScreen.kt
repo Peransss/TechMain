@@ -18,6 +18,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.techmain.firebase.CustomQuestion
 import com.example.techmain.firebase.CustomQuiz
+import com.example.techmain.ui.components.GlassCard
+import com.example.techmain.ui.components.NeonButton
+import com.example.techmain.ui.theme.CyberPrimary
+import com.example.techmain.ui.theme.CyberAccent
+import com.example.techmain.ui.theme.CyberBackground
+import com.example.techmain.ui.theme.CyberSurfaceBorder
+import com.example.techmain.ui.theme.CyberTextPrimary
+import com.example.techmain.ui.theme.CyberTextSecondary
+import androidx.compose.foundation.BorderStroke
 import java.util.UUID
 
 @Composable
@@ -29,6 +38,8 @@ fun CreatorWizardScreen(viewModel: CreatorViewModel = viewModel(), onBack: () ->
 
     val state by viewModel.state.collectAsState()
 
+    LaunchedEffect(Unit) { viewModel.resetSuccess() }
+
     LaunchedEffect(state.isSuccess) {
         if (state.isSuccess) {
             onBack()
@@ -38,7 +49,7 @@ fun CreatorWizardScreen(viewModel: CreatorViewModel = viewModel(), onBack: () ->
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         AnimatedContent(targetState = step, label = "wizard") { targetStep ->
             when(targetStep) {
-                0 -> MetadataStep(quizTitle, { quizTitle = it }, { step++ })
+                0 -> MetadataStep(quizTitle, { quizTitle = it }, { step++ }, onBack)
                 1 -> QuestionStep(questions, { questions = it }, { step++ }, { step-- })
                 2 -> MediaStep(
                     questions, 
@@ -52,16 +63,16 @@ fun CreatorWizardScreen(viewModel: CreatorViewModel = viewModel(), onBack: () ->
         }
         
         if (state.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            CircularProgressIndicator(color = CyberPrimary, modifier = Modifier.align(Alignment.CenterHorizontally))
         }
         state.errorMessage?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
+            Text(it, color = CyberAccent, modifier = Modifier.padding(top = 8.dp))
         }
     }
 }
 
 @Composable
-fun MetadataStep(title: String, onTitleChange: (String) -> Unit, onNext: () -> Unit) {
+fun MetadataStep(title: String, onTitleChange: (String) -> Unit, onNext: () -> Unit, onBack: () -> Unit) {
     Column {
         Text("Langkah 1: Informasi Dasar", style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(16.dp))
@@ -72,11 +83,16 @@ fun MetadataStep(title: String, onTitleChange: (String) -> Unit, onNext: () -> U
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(24.dp))
-        Button(
-            onClick = onNext, 
-            enabled = title.isNotEmpty(), 
-            modifier = Modifier.fillMaxWidth()
-        ) { Text("Lanjut") }
+        Row(modifier = Modifier.fillMaxWidth()) {
+            NeonButton(onClick = onBack, isPrimary = false, isOutlined = true, modifier = Modifier.weight(1f)) { Text("Batal") }
+            Spacer(modifier = Modifier.width(8.dp))
+            NeonButton(
+                onClick = onNext, 
+                enabled = title.isNotEmpty(), 
+                isPrimary = true,
+                modifier = Modifier.weight(1f)
+            ) { Text("Lanjut") }
+        }
     }
 }
 
@@ -92,12 +108,10 @@ fun QuestionStep(questions: List<CustomQuestion>, onQuestionsChange: (List<Custo
         
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(questions) { q -> 
-                Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text(q.question, fontWeight = FontWeight.Bold)
-                        q.options.forEachIndexed { index, opt ->
-                            Text("${('A' + index)}. $opt", color = if (index == q.correctAnswer) MaterialTheme.colorScheme.primary else Color.Gray)
-                        }
+                GlassCard(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), border = BorderStroke(1.dp, CyberSurfaceBorder)) {
+                    Text(q.question, fontWeight = FontWeight.Bold)
+                    q.options.forEachIndexed { index, opt ->
+                        Text("${('A' + index)}. $opt", color = if (index == q.correctAnswer) CyberPrimary else Color.Gray)
                     }
                 }
             }
@@ -125,7 +139,7 @@ fun QuestionStep(questions: List<CustomQuestion>, onQuestionsChange: (List<Custo
             }
         }
 
-        Button(
+        NeonButton(
             onClick = { 
                 onQuestionsChange(questions + CustomQuestion(
                     id = UUID.randomUUID().toString(), 
@@ -138,13 +152,14 @@ fun QuestionStep(questions: List<CustomQuestion>, onQuestionsChange: (List<Custo
                 correctAnswer = 0
             },
             enabled = newQuestionText.isNotEmpty() && options.all { it.isNotEmpty() },
+            isPrimary = true,
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
         ) { Text("Tambah Pertanyaan") }
         
         Row(modifier = Modifier.padding(top = 24.dp).fillMaxWidth()) {
-            OutlinedButton(onClick = onBack, modifier = Modifier.weight(1f)) { Text("Kembali") }
+            NeonButton(onClick = onBack, isPrimary = false, isOutlined = true, modifier = Modifier.weight(1f)) { Text("Kembali") }
             Spacer(modifier = Modifier.width(8.dp))
-            Button(onClick = onNext, enabled = questions.isNotEmpty(), modifier = Modifier.weight(1f)) { Text("Lanjut") }
+            NeonButton(onClick = onNext, enabled = questions.isNotEmpty(), isPrimary = true, modifier = Modifier.weight(1f)) { Text("Lanjut") }
         }
     }
 }
@@ -166,19 +181,18 @@ fun MediaStep(questions: List<CustomQuestion>, images: MutableMap<String, Uri>, 
         
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(questions) { q ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                        .clickable { 
-                            selectedQuestionId = q.id
-                            launcher.launch("image/*") 
-                        }
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    border = BorderStroke(1.dp, CyberSurfaceBorder),
+                    onClick = {
+                        selectedQuestionId = q.id
+                        launcher.launch("image/*")
+                    }
                 ) {
-                    Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(q.question, modifier = Modifier.weight(1f))
                         if (images.containsKey(q.id)) {
-                            Text("✅ Terpilih", color = MaterialTheme.colorScheme.primary)
+                            Text("✅ Terpilih", color = CyberPrimary)
                         } else {
                             Text("📁 Pilih Gambar", style = MaterialTheme.typography.bodySmall)
                         }
@@ -188,9 +202,9 @@ fun MediaStep(questions: List<CustomQuestion>, images: MutableMap<String, Uri>, 
         }
         
         Row(modifier = Modifier.padding(top = 24.dp).fillMaxWidth()) {
-            OutlinedButton(onClick = onBack, modifier = Modifier.weight(1f)) { Text("Kembali") }
+            NeonButton(onClick = onBack, isPrimary = false, isOutlined = true, modifier = Modifier.weight(1f)) { Text("Kembali") }
             Spacer(modifier = Modifier.width(8.dp))
-            Button(onClick = onPublish, modifier = Modifier.weight(1f)) { Text("Publikasikan") }
+            NeonButton(onClick = onPublish, isPrimary = true, modifier = Modifier.weight(1f)) { Text("Publikasikan") }
         }
     }
 }
