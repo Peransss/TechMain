@@ -8,6 +8,7 @@ import com.example.techmain.firebase.FirestoreService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 data class CreatorUiState(
     val myQuizzes: List<CustomQuiz> = emptyList(),
@@ -21,6 +22,10 @@ class CreatorViewModel : ViewModel() {
     private val storage = FirebaseModule.storageService
     private val _state = MutableStateFlow(CreatorUiState())
     val state = _state.asStateFlow()
+
+    fun resetSuccess() {
+        _state.value = _state.value.copy(isSuccess = false)
+    }
 
     init {
         loadMyQuizzes()
@@ -38,8 +43,8 @@ class CreatorViewModel : ViewModel() {
     fun deleteQuiz(quiz: CustomQuiz) {
         viewModelScope.launch {
             try {
-                firestoreService.deleteCustomQuiz(quiz.id)
                 storage.deleteQuizMedia(quiz.creatorId, quiz.id)
+                firestoreService.deleteCustomQuiz(quiz.id)
             } catch (e: Exception) {
                 _state.value = _state.value.copy(errorMessage = "Gagal menghapus kuis")
             }
@@ -52,7 +57,8 @@ class CreatorViewModel : ViewModel() {
             _state.value = _state.value.copy(isLoading = true, errorMessage = null, isSuccess = false)
             try {
                 val finalQuiz = quiz.copy(creatorId = userId)
-                val quizId = firestoreService.createCustomQuiz(finalQuiz)
+                val quizId = UUID.randomUUID().toString()
+                // Upload all images first, then create the Firestore doc
                 val updatedQuestions = finalQuiz.questions.map { question ->
                     val imageUri = images[question.id]
                     if (imageUri != null) {
@@ -63,7 +69,7 @@ class CreatorViewModel : ViewModel() {
                         question
                     }
                 }
-                firestoreService.updateCustomQuizQuestions(quizId, updatedQuestions)
+                firestoreService.createCustomQuiz(finalQuiz.copy(questions = updatedQuestions), quizId)
                 _state.value = _state.value.copy(isLoading = false, isSuccess = true)
             } catch (e: Exception) {
                 _state.value = _state.value.copy(isLoading = false, errorMessage = "Gagal menyimpan kuis: ${e.message}")

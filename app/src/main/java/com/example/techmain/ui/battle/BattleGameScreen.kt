@@ -36,7 +36,6 @@ import com.example.techmain.ui.theme.CyberSecondary
 import com.example.techmain.ui.theme.CyberSurfaceBorder
 import com.example.techmain.ui.theme.CyberTextPrimary
 import com.example.techmain.ui.theme.CyberTextSecondary
-import com.example.techmain.ui.theme.NeonSlatePrimary
 
 @Composable
 fun BattleGameScreen(viewModel: BattleViewModel) {

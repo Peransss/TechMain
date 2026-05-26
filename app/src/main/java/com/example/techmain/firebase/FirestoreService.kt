@@ -19,11 +19,11 @@ class FirestoreService {
     private val roomsCollection = db.collection("rooms")
     private val customQuizzesCollection = db.collection("custom_quizzes")
 
-    suspend fun createCustomQuiz(quiz: CustomQuiz): String {
-        val ref = customQuizzesCollection.document()
-        val finalQuiz = quiz.copy(id = ref.id, createdAt = System.currentTimeMillis())
-        ref.set(finalQuiz).await()
-        return ref.id
+    suspend fun createCustomQuiz(quiz: CustomQuiz, quizId: String = ""): String {
+        val id = quizId.ifEmpty { customQuizzesCollection.document().id }
+        val finalQuiz = quiz.copy(id = id, createdAt = System.currentTimeMillis())
+        customQuizzesCollection.document(id).set(finalQuiz).await()
+        return id
     }
 
     fun listenMyQuizzes(userId: String): Flow<List<CustomQuiz>> = callbackFlow {
@@ -78,7 +78,7 @@ class FirestoreService {
                     "totalGames" to 0,
                     "correctAnswers" to 0,
                     "totalAnswers" to 0,
-                    "createdAt" to FieldValue.serverTimestamp()
+                    "createdAt" to System.currentTimeMillis()
                 )
             ).await()
         }
@@ -167,7 +167,10 @@ class FirestoreService {
 
         if (questions.isEmpty()) return ""
 
-        val totalRounds = if (mode == "marathon") 10 else questions.size
+        val totalRounds = when (mode) {
+            "marathon" -> 10
+            else -> 5
+        }
         val roundTimeLimit = when (mode) {
             "blitz" -> 10
             "marathon" -> 15
@@ -236,13 +239,14 @@ class FirestoreService {
         awaitClose { listener.remove() }
     }
 
-    suspend fun submitAnswer(gameId: String, playerId: String, selectedAnswer: Int, isCorrect: Boolean, mode: String = "casual") {
+    suspend fun submitAnswer(gameId: String, playerId: String, selectedAnswer: Int, isCorrect: Boolean, mode: String = "casual", multiplier: Float = 1f) {
         val gameRef = gamesCollection.document(gameId)
-        val points = when (mode) {
+        val basePoints = when (mode) {
             "blitz" -> 150L
             "marathon" -> 50L
             else -> 100L
         }
+        val points = (basePoints.toFloat() * multiplier).toLong()
         db.runTransaction { transaction ->
             val snapshot = transaction.get(gameRef)
             val game = snapshot.toObject<GameSession>() ?: return@runTransaction
@@ -297,29 +301,37 @@ class FirestoreService {
         val players = game.players
         val winner = players.maxByOrNull { it.value.score }
         val winnerId = winner?.key ?: ""
+        val hasWinner = winnerId.isNotEmpty()
+
+        gameRef.update(mapOf("status" to "finished", "winnerId" to winnerId)).await()
 
         for ((uid, player) in players) {
             if (uid.startsWith("system_bot_")) continue
-            val userRef = usersCollection.document(uid)
-            val isWinner = uid == winnerId
-            userRef.update(
-                mapOf(
-                    "totalGames" to FieldValue.increment(1L),
-                    "wins" to FieldValue.increment(if (isWinner) 1L else 0L),
-                    "losses" to FieldValue.increment(if (!isWinner && players.size > 1) 1L else 0L),
-                    "correctAnswers" to FieldValue.increment(player.correctCount.toLong()),
-                    "totalAnswers" to FieldValue.increment(player.totalAnswered.toLong()),
-                    "rating" to FieldValue.increment(if (isWinner) 15L else -5L)
-                )
-            ).await()
+            try {
+                val userRef = usersCollection.document(uid)
+                val isWinner = uid == winnerId
+                userRef.update(
+                    mapOf(
+                        "totalGames" to FieldValue.increment(1L),
+                        "wins" to FieldValue.increment(if (isWinner) 1L else 0L),
+                        "losses" to FieldValue.increment(if (hasWinner && !isWinner && players.size > 1) 1L else 0L),
+                        "correctAnswers" to FieldValue.increment(player.correctCount.toLong()),
+                        "totalAnswers" to FieldValue.increment(player.totalAnswered.toLong()),
+                        "rating" to FieldValue.increment(if (isWinner) 15L else if (hasWinner) -5L else 0L)
+                    )
+                ).await()
+            } catch (_: Exception) { }
         }
-
-        gameRef.update(mapOf("status" to "finished", "winnerId" to winnerId)).await()
     }
 
     suspend fun usePowerUp(gameId: String, playerId: String, powerUpType: String) {
         val gameRef = gamesCollection.document(gameId)
         gameRef.update("players.$playerId.powerUps.$powerUpType", false).await()
+    }
+
+    suspend fun forfeitPlayer(gameId: String, playerId: String) {
+        val gameRef = gamesCollection.document(gameId)
+        gameRef.update("players.$playerId", FieldValue.delete()).await()
     }
 
     suspend fun freezeOpponent(gameId: String, playerId: String, durationMs: Long) {

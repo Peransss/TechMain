@@ -23,6 +23,8 @@ data class SoloPracticeState(
     val coinsEarned: Int = 0,
     val selectedAnswer: Int = -1,
     val hasAnswered: Boolean = false,
+    val showingFeedback: Boolean = false,
+    val lastAnswerCorrect: Boolean = false,
     val timeLeft: Int = 10,
     val isFinished: Boolean = false,
     val status: String = "ready"
@@ -45,6 +47,17 @@ data class SoloPracticeState(
     fun submitAnswer(answerIndex: Int): SoloPracticeState {
         val q = currentQuestion ?: return this
         val isCorrect = answerIndex == q.correctAnswer
+        return copy(
+            selectedAnswer = answerIndex,
+            hasAnswered = true,
+            showingFeedback = true,
+            lastAnswerCorrect = isCorrect
+        )
+    }
+
+    fun advanceAfterFeedback(): SoloPracticeState {
+        val q = currentQuestion ?: return this
+        val isCorrect = lastAnswerCorrect
         val newStreak = if (isCorrect) streak + 1 else 0
         val streakBonus = if (isCorrect && newStreak > 0 && newStreak % 5 == 0) 50 else 0
         val points = if (isCorrect) 100 + streakBonus else 0
@@ -55,8 +68,9 @@ data class SoloPracticeState(
         val isFinished = nextRound >= totalRounds
 
         return copy(
-            selectedAnswer = -1,    // DIPERBAIKI: Reset pilihan jawaban untuk soal berikutnya
-            hasAnswered = false,    // DIPERBAIKI: Reset status agar soal berikutnya bisa dijawab
+            selectedAnswer = -1,
+            hasAnswered = false,
+            showingFeedback = false,
             score = score + points,
             correctCount = correctCount + (if (isCorrect) 1 else 0),
             totalAnswered = totalAnswered + 1,

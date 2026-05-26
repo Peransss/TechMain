@@ -244,37 +244,23 @@ class BattleViewModel : ViewModel() {
         gameListenerJob = viewModelScope.launch {
             var lastRound = -1
             firestore.listenGame(gameId).collect { game ->
-                // PERBAIKAN DINAMIS: Menentukan target jumlah soal berdasarkan mode game
-                val adjustedGame = if (_state.value.isBotGame) {
-                    // Jika mode mengandung kata "marathon", set ke 10 soal. Jika tidak (casual), set ke 5 soal.
-                    val targetCount = if (game.mode.contains("marathon", ignoreCase = true) ||
-                        _state.value.selectedMode.contains("marathon", ignoreCase = true)) 10 else 5
 
-                    val limitedQuestions = game.questions.take(targetCount)
-                    game.copy(
-                        totalRounds = targetCount,
-                        questions = limitedQuestions
-                    )
-                } else {
-                    game
-                }
-
-                when (adjustedGame.status) {
+                when (game.status) {
                     "finished" -> {
                         timerJob?.cancel()
                         botAnswerJob?.cancel()
-                        _state.value = _state.value.copy(game = adjustedGame, screen = BattleScreen.RESULT)
+                        _state.value = _state.value.copy(game = game, screen = BattleScreen.RESULT)
                     }
                     "playing" -> {
                         if (_state.value.screen != BattleScreen.GAME) {
                             _state.value = _state.value.copy(screen = BattleScreen.GAME)
                         }
 
-                        if (adjustedGame.currentRound != lastRound) {
-                            lastRound = adjustedGame.currentRound
+                        if (game.currentRound != lastRound) {
+                            lastRound = game.currentRound
                             botHasAnswered = false
                             _state.value = _state.value.copy(
-                                game = adjustedGame,
+                                game = game,
                                 selectedAnswer = -1,
                                 hasAnswered = false,
                                 eliminatedOptions = emptySet(),
@@ -283,14 +269,14 @@ class BattleViewModel : ViewModel() {
                             )
                             startRoundTimer()
                             if (_state.value.isBotGame) {
-                                botSubmitAnswer(adjustedGame)
+                                botSubmitAnswer(game)
                             }
                         } else {
-                            _state.value = _state.value.copy(game = adjustedGame)
+                            _state.value = _state.value.copy(game = game)
                         }
 
-                        if (adjustedGame.currentRound == lastRound) {
-                            checkAndAdvanceRound(adjustedGame)
+                        if (game.currentRound == lastRound) {
+                            checkAndAdvanceRound(game)
                         }
                     }
                 }
@@ -300,11 +286,11 @@ class BattleViewModel : ViewModel() {
 
     private fun checkAndAdvanceRound(game: GameSession) {
         if (advancingRound == game.currentRound) return
+        if (_state.value.isShowingCorrectAnswer) return
 
         val myId = _state.value.myUserId
         val me = game.players[myId]
 
-        // 1. Pastikan status kamu benar-benar sudah menjawab di UI atau di Server
         val humanReady = _state.value.hasAnswered || me?.isReady == true
 
         val botReady = if (_state.value.isBotGame) {
@@ -313,21 +299,24 @@ class BattleViewModel : ViewModel() {
             game.players["system_bot_ai"]?.isReady == true
         }
 
-        // 2. KUNCI UTAMA: Jika bermain VS Bot, soal HANYA BOLEH berganti jika KAMU sudah menjawab DAN BOT sudah menjawab.
-        // Bot tidak bisa lagi memaksa mengganti soal sendirian jika kamu belum menjawab.
         val allReady = if (_state.value.isBotGame) {
             humanReady && botReady
         } else {
-            game.players.size >= 2 && game.players.values.all { it.isReady }
+            game.players.isNotEmpty() && (
+                game.roundClaimedBy.isNotEmpty() || game.players.values.all { it.isReady }
+            )
         }
 
-        // 3. Tambahkan pengecekan ketat agar server tidak melompati ronde secara sepihak
         if (allReady) {
             advancingRound = game.currentRound
             timerJob?.cancel()
             botAnswerJob?.cancel()
 
             viewModelScope.launch {
+                _state.value = _state.value.copy(isShowingCorrectAnswer = true)
+                delay(2000)
+                _state.value = _state.value.copy(isShowingCorrectAnswer = false)
+
                 val maxRounds = if (_state.value.isBotGame) game.totalRounds else game.totalRounds
                 try {
                     firestore.advanceRound(game.gameId, game.currentRound, maxRounds)
@@ -344,8 +333,15 @@ class BattleViewModel : ViewModel() {
             val game = _state.value.game
             var timeLeft = game.roundTimeLimit
 
+            val myId = _state.value.myUserId
             while (timeLeft > 0) {
-                // Jangan kurangi timer visual jika sedang membeku memperlihatkan jawaban benar
+                val frozenUntil = _state.value.game.players[myId]?.timeFrozenUntil ?: 0L
+                if (frozenUntil > System.currentTimeMillis()) {
+                    _state.value = _state.value.copy(timeLeft = timeLeft)
+                    delay(500)
+                    continue
+                }
+
                 if (!_state.value.isShowingCorrectAnswer) {
                     _state.value = _state.value.copy(timeLeft = timeLeft)
                     delay(1000)
@@ -375,7 +371,7 @@ class BattleViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
-                firestore.submitAnswer(game.gameId, userId, -1, false, game.mode)
+                firestore.submitAnswer(game.gameId, userId, -1, false, game.mode, 1f)
             } catch (e: Exception) {
                 _state.value = _state.value.copy(errorMessage = "Gagal mengirim jawaban")
             }
@@ -399,10 +395,14 @@ class BattleViewModel : ViewModel() {
         _state.value = _state.value.copy(hasAnswered = true, selectedAnswer = selectedAnswer)
 
         viewModelScope.launch {
+            val multiplier = if (_state.value.doublePointsActive) 2f else 1f
             try {
-                firestore.submitAnswer(game.gameId, userId, selectedAnswer, isCorrect, game.mode)
+                firestore.submitAnswer(game.gameId, userId, selectedAnswer, isCorrect, game.mode, multiplier)
             } catch (e: Exception) {
-                _state.value = _state.value.copy(errorMessage = "Gagal mengirim jawaban")
+                _state.value = _state.value.copy(
+                    hasAnswered = false,
+                    errorMessage = "Gagal mengirim jawaban"
+                )
             }
             if (_state.value.isBotGame) {
                 checkAndAdvanceRound(_state.value.game)
@@ -423,7 +423,7 @@ class BattleViewModel : ViewModel() {
             val answer = BotAnswerEngine.getAnswer(question.correctAnswer, isCorrect, question.options.size)
 
             try {
-                firestore.submitAnswer(game.gameId, "system_bot_ai", answer, isCorrect, game.mode)
+                firestore.submitAnswer(game.gameId, "system_bot_ai", answer, isCorrect, game.mode, 1f)
             } catch (_: Exception) { }
 
             botHasAnswered = true
@@ -450,7 +450,10 @@ class BattleViewModel : ViewModel() {
                     }
                     "timeFreeze" -> {
                         firestore.usePowerUp(game.gameId, userId, type)
-                        firestore.freezeOpponent(game.gameId, userId, 5000L)
+                        val opponentId = game.players.keys.firstOrNull { it != userId }
+                        if (opponentId != null) {
+                            firestore.freezeOpponent(game.gameId, opponentId, 5000L)
+                        }
                     }
                 }
             } catch (_: Exception) { }
@@ -472,10 +475,17 @@ class BattleViewModel : ViewModel() {
 
     fun leaveRoom() {
         val userId = FirebaseModule.getUserId() ?: return
+        val gameId = _state.value.gameId
+        val isInGame = _state.value.screen == BattleScreen.GAME
         viewModelScope.launch {
+            if (isInGame && gameId.isNotEmpty()) {
+                firestore.forfeitPlayer(gameId, userId)
+            }
             firestore.leaveRoom(_state.value.roomCode, userId)
+            roomListenerJob?.cancel()
+            gameListenerJob?.cancel()
+            timerJob?.cancel()
         }
-        roomListenerJob?.cancel()
         advancingRound = -1
         botHasAnswered = false
         _state.value = BattleUiState(myUserId = _state.value.myUserId)

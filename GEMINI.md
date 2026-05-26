@@ -32,7 +32,7 @@ TechMain is an Android-based multiplayer educational quiz game inspired by "ZEP 
 *   **Reactive Flow:** Round advancement is triggered reactively by `BattleViewModel` monitoring player readiness, ensuring stability across network latencies.
 
 ### UI & Navigation
-*   **Navigation:** Uses `Navigation Compose`. The main flow is defined in `MainActivity.kt` and `NavGraph.kt`.
+*   **Navigation:** Uses `Navigation Compose`. Route constants are defined in `NavGraph.kt`; the `NavHost` graph is set up in `MainActivity.kt`.
 *   **Battle Screens:** Managed internally within `BattleMainScreen.kt` using a custom state-driven routing (`LOBBY`, `WAITING_ROOM`, `GAME`, `RESULT`).
 *   **Theming:** Soft Neon Glassmorphism (custom dark-only theme using `NeonSlate` palette) with consistent glassmorphism effects (GlassCard, AnswerButton).
 
