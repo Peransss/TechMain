@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+enum class LeaderboardViewMode { LIST, TABLE }
+
 data class LeaderboardEntry(
     val rank: Int = 0,
     val userId: String = "",
@@ -25,7 +27,8 @@ data class LeaderboardEntry(
 data class LeaderboardState(
     val entries: List<LeaderboardEntry> = emptyList(),
     val myStats: LeaderboardEntry? = null,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val viewMode: LeaderboardViewMode = LeaderboardViewMode.LIST
 )
 
 class LeaderboardViewModel : ViewModel() {
@@ -35,6 +38,15 @@ class LeaderboardViewModel : ViewModel() {
 
     init {
         loadLeaderboard()
+    }
+
+    fun toggleViewMode() {
+        _state.value = _state.value.copy(
+            viewMode = if (_state.value.viewMode == LeaderboardViewMode.LIST)
+                LeaderboardViewMode.TABLE
+            else
+                LeaderboardViewMode.LIST
+        )
     }
 
     private fun loadLeaderboard() {
