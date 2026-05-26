@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -35,6 +36,10 @@ import com.example.techmain.ui.profile.ProfileScreen
 import com.example.techmain.ui.studio.CreatorWizardScreen
 import com.example.techmain.ui.studio.StudioScreen
 import com.example.techmain.ui.theme.TechMainTheme
+import com.example.techmain.ui.theme.CyberPrimary
+import com.example.techmain.ui.theme.CyberTextSecondary
+import com.example.techmain.ui.theme.CyberBackground
+import androidx.compose.material3.NavigationBarItemDefaults
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,17 +55,21 @@ class MainActivity : ComponentActivity() {
 fun MainScreen() {
     val navController = rememberNavController()
     var isSigningIn by remember { mutableStateOf(true) }
+    var signInError by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         if (!FirebaseModule.isSignedIn()) {
-            FirebaseModule.signInAnonymously()
+            val result = FirebaseModule.signInAnonymously()
+            result.onFailure {
+                signInError = true
+            }
         }
         isSigningIn = false
     }
 
-    if (isSigningIn) {
+    if (isSigningIn || signInError) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(color = CyberPrimary)
         }
         return
     }
@@ -74,11 +83,14 @@ fun MainScreen() {
             val showBottomBar = screens.any { it.route == currentDestination?.route }
 
             if (showBottomBar) {
-                NavigationBar {
+                NavigationBar(
+                    containerColor = CyberBackground,
+                    contentColor = CyberTextSecondary
+                ) {
                     screens.forEach { screen ->
                         NavigationBarItem(
-                            icon = { Icon(screen.icon, contentDescription = screen.title) },
-                            label = { Text(screen.title) },
+                            icon = { Icon(screen.icon, contentDescription = screen.title, tint = if (currentDestination?.hierarchy?.any { it.route == screen.route } == true) CyberPrimary else CyberTextSecondary) },
+                            label = { Text(screen.title, color = if (currentDestination?.hierarchy?.any { it.route == screen.route } == true) CyberPrimary else CyberTextSecondary) },
                             selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                             onClick = {
                                 navController.navigate(screen.route) {
@@ -86,7 +98,10 @@ fun MainScreen() {
                                     launchSingleTop = true
                                     restoreState = true
                                 }
-                            }
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                indicatorColor = CyberPrimary.copy(alpha = 0.15f)
+                            )
                         )
                     }
                 }
