@@ -1,7 +1,9 @@
 package com.example.techmain.ui.battle
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,50 +11,48 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.Login
-
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.ui.graphics.Color
-import com.example.techmain.firebase.CustomQuiz
-import com.example.techmain.ui.components.GlassCard
-import com.example.techmain.ui.components.NeonButton
-import com.example.techmain.ui.theme.NeonSlateBackground
-import com.example.techmain.ui.theme.NeonSlateSurfaceBorder
-import com.example.techmain.ui.theme.NeonSlatePrimary
-import com.example.techmain.ui.theme.NeonSlateSecondary
-import com.example.techmain.ui.theme.GlassWhiteHigh
-
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import com.example.techmain.firebase.CustomQuiz
 import com.example.techmain.firebase.QuestionBank
 import com.example.techmain.game.BotDifficulty
+import com.example.techmain.ui.components.GlassCard
+import com.example.techmain.ui.components.NeonButton
+import com.example.techmain.ui.theme.CyberAccent
+import com.example.techmain.ui.theme.CyberBackground
+import com.example.techmain.ui.theme.CyberPrimary
+import com.example.techmain.ui.theme.CyberSecondary
+import com.example.techmain.ui.theme.CyberSurfaceBorder
+import com.example.techmain.ui.theme.CyberTextPrimary
+import com.example.techmain.ui.theme.CyberTextSecondary
+
+import androidx.activity.compose.BackHandler
 
 @Composable
 fun BattleLobbyScreen(viewModel: BattleViewModel) {
@@ -85,7 +85,7 @@ fun LobbyContent(viewModel: BattleViewModel) {
         
         val featuredQuizzes by viewModel.featuredQuizzes.collectAsState()
         if (featuredQuizzes.isNotEmpty()) {
-            Text("Featured Quizzes", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = NeonSlatePrimary)
+            Text("Featured Quizzes", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = CyberPrimary)
             Spacer(modifier = Modifier.height(12.dp))
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -96,11 +96,11 @@ fun LobbyContent(viewModel: BattleViewModel) {
                     GlassCard(
                         onClick = { viewModel.selectCategory(quiz.id) },
                         modifier = Modifier.size(width = 200.dp, height = 120.dp),
-                        border = BorderStroke(2.dp, if (isSelected) Color.White else NeonSlatePrimary.copy(alpha = 0.5f)),
-                        containerColor = if (isSelected) NeonSlatePrimary.copy(alpha = 0.2f) else GlassWhiteHigh.copy(alpha = 0.1f)
+                        border = BorderStroke(2.dp, if (isSelected) Color.White else CyberPrimary.copy(alpha = 0.5f)),
+                        containerColor = if (isSelected) CyberPrimary.copy(alpha = 0.2f) else CyberSurfaceBorder.copy(alpha = 0.1f)
                     ) {
                         Text(quiz.title, color = Color.White, fontWeight = FontWeight.Bold)
-                        Text("${quiz.questions.size} Questions", color = NeonSlatePrimary, style = MaterialTheme.typography.bodySmall)
+                        Text("${quiz.questions.size} Questions", color = CyberPrimary, style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
@@ -122,31 +122,28 @@ fun LobbyContent(viewModel: BattleViewModel) {
                 GlassCard(
                     onClick = { viewModel.selectCategory(category.id) },
                     modifier = Modifier.fillMaxWidth(),
-                    border = BorderStroke(2.dp, if (isSelected) NeonSlatePrimary else Color.Transparent),
-                    containerColor = if (isSelected) NeonSlatePrimary.copy(alpha = 0.1f) else GlassWhiteHigh.copy(alpha = 0.05f)
+                    border = BorderStroke(2.dp, if (isSelected) CyberPrimary else Color.Transparent),
+                    containerColor = if (isSelected) CyberPrimary.copy(alpha = 0.1f) else CyberBackground
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            text = when (category.icon) {
-                                "calculate" -> "\uD83D\uDD22"
-                                "biotech" -> "\uD83D\uDD2C"
-                                "history" -> "\uD83D\uDCD6"
-                                "public" -> "\uD83C\uDF0D"
-                                "translate" -> "\uD83D\uDD0A"
-                                else -> "\uD83D\uDCA1"
-                            },
-                            style = MaterialTheme.typography.headlineLarge
-                        )
+                        when (category.icon) {
+                            "calculate" -> Icon(Icons.Default.Calculate, contentDescription = null, modifier = Modifier.size(32.dp), tint = Color.White)
+                            "biotech" -> Icon(Icons.Default.Science, contentDescription = null, modifier = Modifier.size(32.dp), tint = Color.White)
+                            "history" -> Icon(Icons.Default.Book, contentDescription = null, modifier = Modifier.size(32.dp), tint = Color.White)
+                            "public" -> Icon(Icons.Default.Public, contentDescription = null, modifier = Modifier.size(32.dp), tint = Color.White)
+                            "translate" -> Text("\uD83D\uDD0A", style = MaterialTheme.typography.headlineLarge)
+                            else -> Text("\uD83D\uDCA1", style = MaterialTheme.typography.headlineLarge)
+                        }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             category.name,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
-                            color = if (isSelected) NeonSlatePrimary else Color.White
+                            color = if (isSelected) CyberPrimary else Color.White
                         )
                     }
                 }
@@ -206,35 +203,45 @@ fun LobbyContent(viewModel: BattleViewModel) {
     }
 
     if (state.showSoloSetup) {
-        AlertDialog(
-            onDismissRequest = { viewModel.hideSoloSetup() },
-            title = { Text("Latihan Solo", fontWeight = FontWeight.Bold) },
-            text = {
+        Dialog(onDismissRequest = { viewModel.hideSoloSetup() }) {
+            GlassCard(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                border = BorderStroke(1.dp, CyberSecondary.copy(alpha = 0.5f))
+            ) {
+                Text("Latihan Solo", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
+                Spacer(modifier = Modifier.height(16.dp))
                 Column {
-                    Text("Pilih jumlah soal:", style = MaterialTheme.typography.bodyMedium)
+                    Text("Pilih jumlah soal:", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.8f))
                     Spacer(Modifier.height(8.dp))
                     listOf(5, 10).forEach { rounds ->
                         val isSelected = state.soloRounds == rounds
-                        TextButton(
+                        GlassCard(
                             onClick = { viewModel.setSoloRounds(rounds) },
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            containerColor = if (isSelected) CyberSecondary.copy(alpha = 0.2f) else CyberBackground,
+                            border = BorderStroke(1.dp, if (isSelected) CyberSecondary else Color.Transparent),
+                            contentPadding = PaddingValues(12.dp)
                         ) {
                             Text(
                                 "$rounds Soal",
                                 fontWeight = FontWeight.Bold,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                color = if (isSelected) CyberSecondary else Color.White,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center
                             )
                         }
                     }
                 }
-            },
-            confirmButton = {
-                Button(onClick = { viewModel.startSoloPractice() }) {
+                Spacer(modifier = Modifier.height(24.dp))
+                NeonButton(onClick = { viewModel.startSoloPractice() }, modifier = Modifier.fillMaxWidth().height(52.dp), isPrimary = true) {
                     Text("MULAI", fontWeight = FontWeight.Bold)
                 }
-            },
-            dismissButton = { TextButton(onClick = { viewModel.hideSoloSetup() }) { Text("BATAL") } }
-        )
+                Spacer(modifier = Modifier.height(8.dp))
+                NeonButton(onClick = { viewModel.hideSoloSetup() }, modifier = Modifier.fillMaxWidth(), isPrimary = false, isOutlined = true) {
+                    Text("BATAL", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
     }
 }
 
@@ -242,10 +249,13 @@ fun LobbyContent(viewModel: BattleViewModel) {
 fun ModePickerDialog(viewModel: BattleViewModel) {
     val state by viewModel.state.collectAsState()
 
-    AlertDialog(
-        onDismissRequest = { viewModel.hideModePicker() },
-        title = { Text("Pilih Mode", fontWeight = FontWeight.Bold) },
-        text = {
+    Dialog(onDismissRequest = { viewModel.hideModePicker() }) {
+        GlassCard(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            border = BorderStroke(1.dp, CyberSecondary.copy(alpha = 0.5f))
+        ) {
+            Text("Pilih Mode", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
+            Spacer(modifier = Modifier.height(16.dp))
             Column {
                 val modes = listOf(
                     Triple("casual", "Casual", "Standar 5 soal \u00B7 20 detik"),
@@ -255,35 +265,39 @@ fun ModePickerDialog(viewModel: BattleViewModel) {
                 )
                 modes.forEach { (modeId, title, desc) ->
                     val isSelected = state.selectedMode == modeId
-                    TextButton(
+                    GlassCard(
                         onClick = { viewModel.setMode(modeId) },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        border = if (isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null
+                        containerColor = if (isSelected) CyberSecondary.copy(alpha = 0.2f) else CyberBackground,
+                        border = BorderStroke(1.dp, if (isSelected) CyberSecondary else Color.Transparent)
                     ) {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text(
                                 title,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                style = MaterialTheme.typography.titleMedium,
+                                color = if (isSelected) CyberSecondary else Color.White
                             )
                             Text(
                                 desc,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color.White.copy(alpha = 0.7f)
                             )
                         }
                     }
                 }
             }
-        },
-        confirmButton = {
-            Button(onClick = { viewModel.hideModePicker() }) {
-                Text("OK", fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(24.dp))
+            NeonButton(
+                onClick = { viewModel.hideModePicker() },
+                modifier = Modifier.fillMaxWidth(),
+                isPrimary = false,
+                isOutlined = true
+            ) {
+                Text("BATAL", fontWeight = FontWeight.Bold)
             }
-        },
-        dismissButton = { TextButton(onClick = { viewModel.hideModePicker() }) { Text("BATAL") } }
-    )
+        }
+    }
 }
 
 @Composable
@@ -297,7 +311,7 @@ fun JoinRoomContent(viewModel: BattleViewModel) {
     ) {
         GlassCard(
             modifier = Modifier.fillMaxWidth(),
-            border = BorderStroke(1.dp, NeonSlatePrimary.copy(alpha = 0.3f))
+            border = BorderStroke(1.dp, CyberPrimary.copy(alpha = 0.3f))
         ) {
             Text(
                 "Gabung Room",
@@ -343,32 +357,36 @@ fun JoinRoomContent(viewModel: BattleViewModel) {
 fun DifficultyDialog(viewModel: BattleViewModel) {
     val state by viewModel.state.collectAsState()
 
-    AlertDialog(
-        onDismissRequest = { viewModel.hideDifficultyDialog() },
-        title = { Text("Pilih Kesulitan Bot", fontWeight = FontWeight.Bold) },
-        text = {
+    Dialog(onDismissRequest = { viewModel.hideDifficultyDialog() }) {
+        GlassCard(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            border = BorderStroke(1.dp, CyberPrimary.copy(alpha = 0.5f))
+        ) {
+            Text("Pilih Kesulitan Bot", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
+            Spacer(modifier = Modifier.height(16.dp))
             Column {
                 BotDifficulty.entries.forEach { difficulty ->
                     val isSelected = state.difficulty == difficulty
-                    TextButton(
+                    GlassCard(
                         onClick = {
                             viewModel.setDifficulty(difficulty)
                             viewModel.hideDifficultyDialog()
                             viewModel.startVsBot()
                         },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        border = if (isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null
+                        containerColor = if (isSelected) CyberPrimary.copy(alpha = 0.2f) else CyberBackground,
+                        border = BorderStroke(1.dp, if (isSelected) CyberPrimary else Color.Transparent)
                     ) {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text(
                                 when (difficulty) {
-                                    BotDifficulty.EASY -> "\uD83C\uDF31 Easy"
-                                    BotDifficulty.MEDIUM -> "\u26A1 Medium"
-                                    BotDifficulty.HARD -> "\uD83D\uDD25 Hard"
+                                    BotDifficulty.EASY -> "Easy"
+                                    BotDifficulty.MEDIUM -> "Medium"
+                                    BotDifficulty.HARD -> "Hard"
                                 },
                                 fontWeight = FontWeight.Bold,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                style = MaterialTheme.typography.titleMedium,
+                                color = if (isSelected) CyberPrimary else Color.White
                             )
                             Text(
                                 when (difficulty) {
@@ -377,16 +395,23 @@ fun DifficultyDialog(viewModel: BattleViewModel) {
                                     BotDifficulty.HARD -> "Bot sangat pintar (~80% benar)"
                                 },
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color.White.copy(alpha = 0.7f)
                             )
                         }
                     }
                 }
             }
-        },
-        confirmButton = {},
-        dismissButton = { TextButton(onClick = { viewModel.hideDifficultyDialog() }) { Text("BATAL") } }
-    )
+            Spacer(modifier = Modifier.height(24.dp))
+            NeonButton(
+                onClick = { viewModel.hideDifficultyDialog() },
+                modifier = Modifier.fillMaxWidth(),
+                isPrimary = false,
+                isOutlined = true
+            ) {
+                Text("BATAL", fontWeight = FontWeight.Bold)
+            }
+        }
+    }
 }
 
 @Composable
@@ -394,6 +419,8 @@ fun WaitingRoomScreen(viewModel: BattleViewModel) {
     val state by viewModel.state.collectAsState()
     val room = state.room
     val isHost = room.hostId == state.myUserId
+
+    BackHandler { viewModel.leaveRoom() }
 
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -403,10 +430,10 @@ fun WaitingRoomScreen(viewModel: BattleViewModel) {
         Text("Room Siap!", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
 
-        Card(
+        GlassCard(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-            shape = RoundedCornerShape(16.dp)
+            border = BorderStroke(1.dp, CyberPrimary.copy(alpha = 0.5f)),
+            containerColor = CyberBackground
         ) {
             Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("Kode Room", style = MaterialTheme.typography.labelMedium)
@@ -422,49 +449,62 @@ fun WaitingRoomScreen(viewModel: BattleViewModel) {
         val sortedPlayers = room.players.entries.sortedBy { it.key != room.hostId }
         sortedPlayers.forEach { (_, player) ->
             val isHostPlayer = player.userId == room.hostId
-            Card(
+            GlassCard(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = when {
-                        isHostPlayer -> MaterialTheme.colorScheme.tertiaryContainer
-                        player.userId == state.myUserId -> MaterialTheme.colorScheme.secondaryContainer
-                        else -> MaterialTheme.colorScheme.surfaceVariant
-                    }
-                ),
-                shape = RoundedCornerShape(8.dp)
+                containerColor = when {
+                    isHostPlayer -> CyberAccent.copy(alpha = 0.2f)
+                    player.userId == state.myUserId -> CyberPrimary.copy(alpha = 0.2f)
+                    else -> CyberBackground
+                },
+                border = BorderStroke(1.dp, when {
+                    isHostPlayer -> CyberAccent
+                    player.userId == state.myUserId -> CyberPrimary
+                    else -> CyberSurfaceBorder
+                })
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(player.displayName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                     if (isHostPlayer) {
-                        androidx.compose.material3.SuggestionChip(
-                            onClick = {},
-                            label = { Text("HOST") }
-                        )
+                        SuggestionChip(onClick = {}, label = { Text("HOST") })
                     } else {
-                        Text("\u2705 Siap")
+                        Text("Siap")
                     }
                 }
             }
         }
 
         Spacer(modifier = Modifier.weight(1f))
-        Button(
-            onClick = if (isHost) ({ viewModel.startGame() }) else ({ viewModel.leaveRoom() }),
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = if (isHost) ButtonDefaults.buttonColors() else ButtonDefaults.filledTonalButtonColors()
-        ) {
-            Text(
-                if (isHost) "MULAI GAME" else "KELUAR",
-                fontWeight = FontWeight.Bold
-            )
-        }
-        if (isHost && room.players.size < 2) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("Tunggu pemain lain bergabung...", style = MaterialTheme.typography.bodySmall)
+        if (isHost) {
+            NeonButton(
+                onClick = { viewModel.startGame() },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                enabled = room.players.size >= 2,
+                isPrimary = true
+            ) {
+                Text("MULAI GAME", fontWeight = FontWeight.Bold)
+            }
+            if (room.players.size < 2) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("Tunggu pemain lain bergabung...", style = MaterialTheme.typography.bodySmall)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            NeonButton(
+                onClick = { viewModel.leaveRoom() },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                isPrimary = false,
+                isOutlined = true
+            ) {
+                Text("BATALKAN ROOM", fontWeight = FontWeight.Bold)
+            }
+        } else {
+            NeonButton(
+                onClick = { viewModel.leaveRoom() },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                isPrimary = false,
+                isOutlined = true
+            ) {
+                Text("KELUAR", fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
