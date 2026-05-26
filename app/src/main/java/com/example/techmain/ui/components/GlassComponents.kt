@@ -18,25 +18,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.techmain.ui.theme.GlassWhite
-import com.example.techmain.ui.theme.GlassWhiteHigh
-import com.example.techmain.ui.theme.NeonSlatePrimary
-import com.example.techmain.ui.theme.NeonSlateSecondary
-import com.example.techmain.ui.theme.NeonSlateSurfaceBorder
-import com.example.techmain.ui.theme.NeonSlateTextSecondary
+import com.example.techmain.ui.theme.CyberPrimary
+import com.example.techmain.ui.theme.CyberSecondary
+import com.example.techmain.ui.theme.CyberAccent
+import com.example.techmain.ui.theme.CyberSurfaceBorder
+import com.example.techmain.ui.theme.CyberBackground
+import com.example.techmain.ui.theme.CyberTextSecondary
 
-/**
- * A glassmorphism-styled card with semi-transparent background and optional click handling.
- * Note: backdrop-blur (via Modifier.blur) is currently omitted from the main container
- * as it blurs card content. Future updates will explore API 31+ RenderEffect for true backdrop blur.
- */
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     contentPadding: PaddingValues = PaddingValues(16.dp),
-    border: BorderStroke? = BorderStroke(1.dp, GlassWhiteHigh),
-    containerColor: Color = GlassWhite,
+    border: BorderStroke? = BorderStroke(1.dp, CyberSurfaceBorder),
+    containerColor: Color = CyberBackground,
     shape: RoundedCornerShape = RoundedCornerShape(24.dp),
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -50,7 +45,12 @@ fun GlassCard(
     if (onClick != null) {
         Card(
             onClick = onClick,
-            modifier = modifier,
+            modifier = modifier.shadow(
+                elevation = 4.dp,
+                shape = shape,
+                ambientColor = CyberPrimary.copy(alpha = 0.2f),
+                spotColor = CyberPrimary.copy(alpha = 0.2f)
+            ),
             shape = shape,
             border = border,
             colors = CardDefaults.cardColors(
@@ -73,9 +73,6 @@ fun GlassCard(
     }
 }
 
-/**
- * A neon-styled button supporting solid primary and outlined secondary (glass) variations.
- */
 @Composable
 fun NeonButton(
     onClick: () -> Unit,
@@ -83,18 +80,19 @@ fun NeonButton(
     enabled: Boolean = true,
     isPrimary: Boolean = true,
     isOutlined: Boolean = false,
+    containerColor: Color? = null,
     content: @Composable RowScope.() -> Unit
 ) {
-    val accentColor = if (isPrimary) NeonSlatePrimary else NeonSlateSecondary
+    val accentColor = if (isPrimary) CyberAccent else CyberPrimary
     
-    val containerColor = when {
-        !enabled -> NeonSlateSurfaceBorder.copy(alpha = 0.5f)
-        isOutlined -> GlassWhite
+    val resolvedContainerColor = containerColor ?: when {
+        !enabled -> CyberSurfaceBorder.copy(alpha = 0.5f)
+        isOutlined -> Color.Transparent
         else -> accentColor
     }
     
     val contentColor = when {
-        !enabled -> NeonSlateTextSecondary
+        !enabled -> CyberTextSecondary
         isOutlined -> accentColor
         else -> Color.White
     }
@@ -102,24 +100,26 @@ fun NeonButton(
     val border = if (isOutlined && enabled) {
         BorderStroke(1.dp, accentColor)
     } else if (isOutlined && !enabled) {
-        BorderStroke(1.dp, NeonSlateSurfaceBorder)
+        BorderStroke(1.dp, CyberSurfaceBorder)
     } else null
 
     Button(
         onClick = onClick,
-        modifier = modifier.shadow(
-            elevation = if (enabled && !isOutlined) 8.dp else 0.dp,
-            shape = RoundedCornerShape(12.dp),
-            ambientColor = accentColor,
-            spotColor = accentColor
-        ),
+        modifier = if (enabled && !isOutlined && containerColor == null) {
+            modifier.shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(12.dp),
+                ambientColor = accentColor,
+                spotColor = accentColor
+            )
+        } else modifier,
         enabled = enabled,
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = containerColor,
+            containerColor = resolvedContainerColor,
             contentColor = contentColor,
-            disabledContainerColor = NeonSlateSurfaceBorder.copy(alpha = 0.5f),
-            disabledContentColor = NeonSlateTextSecondary
+            disabledContainerColor = CyberSurfaceBorder.copy(alpha = 0.5f),
+            disabledContentColor = CyberTextSecondary
         ),
         border = border,
         content = content
@@ -136,18 +136,19 @@ fun AnswerButton(
     isCorrect: Boolean = false,
     isWrong: Boolean = false
 ) {
-    val containerColor = when {
-        isCorrect -> Color(0xFF4CAF50)
-        isWrong -> Color(0xFFE53935)
-        isSelected -> NeonSlatePrimary
-        else -> NeonSlateSurfaceBorder
+    val bgColor = when {
+        isCorrect -> Color(0xFF34D399)
+        isWrong -> CyberAccent
+        isSelected -> CyberPrimary
+        else -> CyberSurfaceBorder
     }
 
     NeonButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
-        isPrimary = isSelected
+        isPrimary = isSelected,
+        containerColor = bgColor
     ) {
         Text(
             text = text,
