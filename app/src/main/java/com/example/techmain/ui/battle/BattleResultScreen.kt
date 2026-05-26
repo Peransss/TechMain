@@ -20,15 +20,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.techmain.ui.components.GlassCard
 import com.example.techmain.ui.components.NeonButton
-import com.example.techmain.ui.theme.NeonSlateGold
+import com.example.techmain.ui.theme.CyberAccent
+import com.example.techmain.ui.theme.CyberGold
+import com.example.techmain.ui.theme.CyberPrimary
 
 @Composable
 fun BattleResultScreen(viewModel: BattleViewModel) {
@@ -55,14 +54,14 @@ fun BattleResultScreen(viewModel: BattleViewModel) {
                     clip = true
                 }
             },
-            tint = if (isWinner) NeonSlateGold else MaterialTheme.colorScheme.onSurfaceVariant
+            tint = if (isWinner) CyberGold else MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = if (isWinner) "KAMU MENANG!" else "KALAH",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
-            color = if (isWinner) NeonSlateGold else MaterialTheme.colorScheme.error
+            color = if (isWinner) CyberGold else CyberAccent
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -87,6 +86,15 @@ fun BattleResultScreen(viewModel: BattleViewModel) {
             modifier = Modifier.fillMaxWidth().height(48.dp)
         ) {
             Text("MAIN LAGI", fontWeight = FontWeight.Bold)
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        NeonButton(
+            onClick = { viewModel.playAgain() },
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            isPrimary = false,
+            isOutlined = true
+        ) {
+            Text("KEMBALI KE LOBBY")
         }
     }
 }
