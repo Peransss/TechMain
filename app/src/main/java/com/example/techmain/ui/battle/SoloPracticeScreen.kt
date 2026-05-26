@@ -7,6 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -14,7 +15,16 @@ import com.example.techmain.game.SoloPracticeConfig
 import com.example.techmain.game.SoloPracticeState
 import com.example.techmain.firebase.FirebaseModule
 import com.example.techmain.firebase.FirestoreService
-import com.example.techmain.ui.theme.NeonSlateGold
+import androidx.compose.foundation.BorderStroke
+import com.example.techmain.ui.components.AnswerButton
+import com.example.techmain.ui.components.GlassCard
+import com.example.techmain.ui.components.NeonButton
+import com.example.techmain.ui.theme.CyberAccent
+import com.example.techmain.ui.theme.CyberBackground
+import com.example.techmain.ui.theme.CyberGold
+import com.example.techmain.ui.theme.CyberPrimary
+import com.example.techmain.ui.theme.CyberSurfaceBorder
+import com.example.techmain.ui.theme.CyberTextSecondary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -55,11 +65,19 @@ fun SoloPracticeScreen(
         }
     }
 
+    LaunchedEffect(state.showingFeedback) {
+        if (state.showingFeedback) {
+            delay(1500)
+            state = state.advanceAfterFeedback()
+        }
+    }
+
     when (state.status) {
         "playing" -> SoloGameContent(
             state = state,
             onSelect = { state = state.selectAnswer(it) },
-            onSubmit = { state = state.submitAnswer(state.selectedAnswer) }
+            onSubmit = { state = state.submitAnswer(state.selectedAnswer) },
+            onBack = onBack
         )
         "finished" -> SoloResultContent(
             state = state,
@@ -74,15 +92,25 @@ fun SoloPracticeScreen(
 }
 
 @Composable
-private fun SoloGameContent(state: SoloPracticeState, onSelect: (Int) -> Unit, onSubmit: () -> Unit) {
+private fun SoloGameContent(state: SoloPracticeState, onSelect: (Int) -> Unit, onSubmit: () -> Unit, onBack: () -> Unit) {
     val q = state.currentQuestion ?: return
+    val correctAnswer = q.correctAnswer
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text(
-            "Latihan Solo",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Latihan Solo",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            NeonButton(onClick = onBack, isPrimary = false, isOutlined = true) {
+                Text("KELUAR", fontWeight = FontWeight.Bold)
+            }
+        }
         Spacer(Modifier.height(8.dp))
 
         Text(
@@ -95,14 +123,14 @@ private fun SoloGameContent(state: SoloPracticeState, onSelect: (Int) -> Unit, o
         LinearProgressIndicator(
             progress = { timerProgress },
             modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-            color = if (state.timeLeft > 3) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+            color = if (state.timeLeft > 3) CyberPrimary else CyberAccent,
             trackColor = MaterialTheme.colorScheme.surfaceVariant
         )
         Text(
             "${state.timeLeft}",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            color = if (state.timeLeft > 3) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+            color = if (state.timeLeft > 3) CyberPrimary else CyberAccent
         )
 
         Spacer(Modifier.height(8.dp))
@@ -110,7 +138,7 @@ private fun SoloGameContent(state: SoloPracticeState, onSelect: (Int) -> Unit, o
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Skor: ${state.score}", fontWeight = FontWeight.Bold)
             if (state.streak > 0) {
-                Text("🔥 ${state.streak}", color = NeonSlateGold)
+                Text("🔥 ${state.streak}", color = CyberGold)
             }
         }
 
@@ -121,40 +149,39 @@ private fun SoloGameContent(state: SoloPracticeState, onSelect: (Int) -> Unit, o
 
         q.options.forEachIndexed { index, option ->
             val isSelected = state.selectedAnswer == index
-            Button(
+            AnswerButton(
+                text = "${('A' + index)}. $option",
                 onClick = { onSelect(index) },
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                    else MaterialTheme.colorScheme.surfaceVariant
-                ),
-                enabled = !state.hasAnswered
-            ) {
-                Text(
-                    "${('A' + index)}. $option",
-                    modifier = Modifier.fillMaxWidth(),
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                )
-            }
+                enabled = !state.hasAnswered,
+                isSelected = isSelected,
+                isCorrect = state.showingFeedback && index == correctAnswer,
+                isWrong = state.showingFeedback && isSelected && !state.lastAnswerCorrect
+            )
         }
 
         Spacer(Modifier.height(16.dp))
 
         if (!state.hasAnswered) {
-            Button(
+            NeonButton(
                 onClick = onSubmit,
                 modifier = Modifier.fillMaxWidth().height(48.dp),
-                enabled = state.selectedAnswer >= 0
+                enabled = state.selectedAnswer >= 0,
+                isPrimary = true
             ) {
                 Text("KONFIRMASI", fontWeight = FontWeight.Bold)
             }
         } else {
             Text(
-                "Menunggu soal berikutnya...",
+                if (state.showingFeedback) {
+                    if (state.lastAnswerCorrect) "✅ Benar!" else "❌ Salah!"
+                } else {
+                    "Menunggu soal berikutnya..."
+                },
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (state.showingFeedback && state.lastAnswerCorrect) Color(0xFF34D399) else CyberAccent,
+                fontWeight = FontWeight.Bold
             )
         }
     }
@@ -181,10 +208,10 @@ private fun SoloResultContent(state: SoloPracticeState, onBack: () -> Unit, onPl
         Text("Streak Terbaik: ${state.maxStreak}")
         Spacer(Modifier.height(16.dp))
 
-        Card(
+        GlassCard(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-            shape = RoundedCornerShape(16.dp)
+            containerColor = CyberPrimary.copy(alpha = 0.15f),
+            border = BorderStroke(1.dp, CyberPrimary.copy(alpha = 0.3f))
         ) {
             Column(
                 Modifier.fillMaxWidth().padding(16.dp),
@@ -192,24 +219,27 @@ private fun SoloResultContent(state: SoloPracticeState, onBack: () -> Unit, onPl
             ) {
                 Text("Hadiah", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
-                Text("EXP: +${state.expEarned}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text("Koin: +${state.coinsEarned}", fontWeight = FontWeight.Bold, color = NeonSlateGold)
+                Text("EXP: +${state.expEarned}", fontWeight = FontWeight.Bold, color = CyberPrimary)
+                Text("Koin: +${state.coinsEarned}", fontWeight = FontWeight.Bold, color = CyberGold)
             }
         }
 
         Spacer(Modifier.height(32.dp))
 
-        Button(
+        NeonButton(
             onClick = onPlayAgain,
-            modifier = Modifier.fillMaxWidth().height(48.dp)
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            isPrimary = true
         ) {
             Text("LATIHAN LAGI", fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(8.dp))
 
-        OutlinedButton(
+        NeonButton(
             onClick = onBack,
-            modifier = Modifier.fillMaxWidth().height(48.dp)
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            isPrimary = false,
+            isOutlined = true
         ) {
             Text("KEMBALI")
         }
