@@ -2,19 +2,15 @@ package com.example.techmain.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val NeonSlateBackground = Color(0xFF0F172A)
-val NeonSlateSurface = Color(0xFF1E293B)
-val NeonSlateSurfaceBorder = Color(0xFF334155)
-val NeonSlatePrimary = Color(0xFF22D3EE)
-val NeonSlateSecondary = Color(0xFF818CF8)
-val NeonSlateAccent = Color(0xFFF472B6)
-val NeonSlateSuccess = Color(0xFF34D399)
-val NeonSlateError = Color(0xFFFB7185)
-val NeonSlateGold = Color(0xFFFBBF24)
-val NeonSlateTextPrimary = Color(0xFFF1F5F9)
-val NeonSlateTextSecondary = Color(0xFF94A3B8)
-
-// Glassmorphism tokens
-val GlassWhite = Color(0x1AFFFFFF) // 10% Alpha
-val GlassWhiteHigh = Color(0x33FFFFFF) // 20% Alpha
-val NeonGlowPrimary = NeonSlatePrimary.copy(alpha = 0.3f)
+val CyberPrimary = Color(0xFF7C3AED)
+val CyberSecondary = Color(0xFFA78BFA)
+val CyberAccent = Color(0xFFF43F5E)
+val CyberBackground = Color(0xFF0F0F23)
+val CyberSurface = Color(0xFF0F0F23)
+val CyberSurfaceBorder = Color(0xFF4C1D95)
+val CyberSuccess = Color(0xFF34D399)
+val CyberError = Color(0xFFF43F5E)
+val CyberGold = Color(0xFFFBBF24)
+val CyberTextPrimary = Color(0xFFE2E8F0)
+val CyberTextSecondary = Color(0xFF94A3B8)
+val NeonGlow = CyberPrimary.copy(alpha = 0.3f)
