@@ -14,3 +14,15 @@
 .cxx
 local.properties
 .superpowers/
+
+# Agent/internal files
+AGENTS.md
+GEMINI.md
+TODO.md
+code_quality_reviewer_prompt.md
+implement.py
+implement_game.py
+implement_lobby.py
+implementer_prompt.md
+spec_reviewer_prompt.md
+visual_offer.txt
